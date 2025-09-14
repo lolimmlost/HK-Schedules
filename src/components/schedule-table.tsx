@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { User, Calendar, Clock, Edit, Trash2, Loader2, Plus } from "lucide-react"
-
+import { formatDate, getDuration } from "@/lib/utils"
 import type { Schedule } from "./schedule-form"
 
 interface ScheduleTableProps {
@@ -21,6 +21,14 @@ interface ScheduleTableProps {
 }
 
 export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProps) {
+  // Debug logging
+  React.useEffect(() => {
+    console.log('ScheduleTable received schedules:', schedules)
+    if (schedules.length === 0) {
+      console.log('No schedules - checking localStorage:', localStorage.getItem('housekeeperSchedules'))
+    }
+  }, [schedules])
+
   const [deletingId, setDeletingId] = React.useState<string | null>(null)
   const [isSorted, setIsSorted] = React.useState<'name' | 'date' | 'start' | null>(null)
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc')
@@ -41,28 +49,7 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
     setDeletingId(null)
   }
 
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return "No date"
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
 
-  const getDuration = (start: string, end: string) => {
-    const startTime = new Date(`2000-01-01T${start}:00`)
-    const endTime = new Date(`2000-01-01T${end}:00`)
-    const diff = endTime.getTime() - startTime.getTime()
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`
-    }
-    return `${minutes}m`
-  }
 
   const sortedSchedules = React.useMemo(() => {
     if (!isSorted) return schedules
@@ -103,8 +90,10 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
   }
 
   const isSmallScreen = window.innerWidth < 768
+  console.log('🔍 ScheduleTable render debug - isSmallScreen:', isSmallScreen, 'schedules.length:', schedules.length, 'window.innerWidth:', window.innerWidth)
 
   if (schedules.length === 0) {
+    console.log('🔍 ScheduleTable: Rendering empty state')
     return (
       <Card>
         <CardHeader className="flex flex-col items-center justify-center space-y-2 text-center">
@@ -126,6 +115,9 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
     )
   }
 
+  console.log('🔍 ScheduleTable: About to render table with', schedules.length, 'schedules, isSmallScreen:', isSmallScreen)
+  console.log('🔍 ScheduleTable: sortedSchedules:', sortedSchedules)
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -146,18 +138,18 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
       <CardContent>
         {/* Desktop Table View */}
         {!isSmallScreen && (
-          <div className="overflow-x-auto hidden sm:table-auto">
+          <div className="overflow-x-auto sm:table-auto">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead 
-                    className="cursor-pointer hover:text-primary/80" 
+                  <TableHead
+                    className="cursor-pointer hover:text-primary/80"
                     onClick={() => toggleSort('name')}
                   >
                     Housekeeper {isSorted === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:text-primary/80" 
+                  <TableHead
+                    className="cursor-pointer hover:text-primary/80"
                     onClick={() => toggleSort('date')}
                   >
                     Date {isSorted === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
@@ -169,67 +161,70 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedSchedules.map((schedule) => (
-                  <TableRow key={schedule.id} className="border-b last:border-b-0 hover:bg-accent/50">
-                    <Td className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <User className="h-4 w-4 text-primary" />
+                {sortedSchedules.map((schedule) => {
+                  console.log('Rendering schedule:', schedule)
+                  return (
+                    <TableRow key={schedule.id} className="border-b last:border-b-0 hover:bg-accent/50">
+                      <Td className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="h-4 w-4 text-primary" />
+                          </div>
+                          <span>{schedule.name}</span>
                         </div>
-                        <span>{schedule.name}</span>
-                      </div>
-                    </Td>
-                    <Td>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{formatDate(schedule.date)}</span>
-                      </div>
-                    </Td>
-                    <Td className="text-center">
-                      <div className="text-sm">
-                        <div>{schedule.start}</div>
-                        <div className="text-xs text-muted-foreground font-mono">{schedule.end}</div>
-                      </div>
-                    </Td>
-                    <Td className="text-center">
-                      <Badge variant="outline" className="text-xs">
-                        {getDuration(schedule.start, schedule.end)}
-                      </Badge>
-                    </Td>
-                    <Td className="max-w-xs">
-                      <div className="text-sm line-clamp-2">
-                        {schedule.tasks || "No tasks specified"}
-                      </div>
-                    </Td>
-                    <Td className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onEdit(schedule)}
-                          className="h-8 w-8 p-0"
-                          title="Edit schedule"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(schedule.id)}
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
-                          disabled={deletingId === schedule.id}
-                          title="Delete schedule"
-                        >
-                          {deletingId === schedule.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </Td>
-                  </TableRow>
-                ))}
+                      </Td>
+                      <Td>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{formatDate(schedule.date)}</span>
+                        </div>
+                      </Td>
+                      <Td className="text-center">
+                        <div className="text-sm">
+                          <div>{schedule.start}</div>
+                          <div className="text-xs text-muted-foreground font-mono">{schedule.end}</div>
+                        </div>
+                      </Td>
+                      <Td className="text-center">
+                        <Badge variant="outline" className="text-xs">
+                          {getDuration(schedule.start, schedule.end)}
+                        </Badge>
+                      </Td>
+                      <Td className="max-w-xs">
+                        <div className="text-sm line-clamp-2">
+                          {schedule.tasks || "No tasks specified"}
+                        </div>
+                      </Td>
+                      <Td className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onEdit(schedule)}
+                            className="h-8 w-8 p-0"
+                            title="Edit schedule"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(schedule.id)}
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
+                            disabled={deletingId === schedule.id}
+                            title="Delete schedule"
+                          >
+                            {deletingId === schedule.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </Td>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           </div>

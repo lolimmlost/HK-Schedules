@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { User, Calendar, Clock, List, Plus } from "lucide-react"
 
+import { getDuration } from "@/lib/utils"
+
 export interface Schedule {
   id: string
   name: string
@@ -60,9 +62,8 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
     if (!formData.end) {
       newErrors.end = "End time is required"
     } else if (formData.start && formData.end) {
-      const startTime = new Date(`2000-01-01T${formData.start}:00`)
-      const endTime = new Date(`2000-01-01T${formData.end}:00`)
-      if (endTime <= startTime) {
+      const duration = getDuration(formData.start, formData.end)
+      if (duration === "0m") {
         newErrors.end = "End time must be after start time"
       }
     }

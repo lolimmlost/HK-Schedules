@@ -13,14 +13,35 @@ import './index.css'
 function App() {
   const [schedules, setSchedules] = React.useState<Schedule[]>(() => {
     const saved = localStorage.getItem('housekeeperSchedules')
-    return saved ? JSON.parse(saved) : []
+    console.log('🔍 App Debug - localStorage raw:', saved)
+    try {
+      const parsed = saved ? JSON.parse(saved) : []
+      console.log('🔍 App Debug - parsed schedules:', parsed, 'count:', parsed.length)
+      return parsed
+    } catch (error) {
+      console.error('🔍 App Debug - JSON.parse error:', error)
+      console.log('🔍 App Debug - falling back to empty array')
+      localStorage.removeItem('housekeeperSchedules')
+      return []
+    }
   })
+
+  // Debug logging for state changes
+  React.useEffect(() => {
+    console.log('🔍 App Debug - schedules state updated:', schedules.length, 'items')
+  }, [schedules])
+
   const [editingSchedule, setEditingSchedule] = React.useState<Schedule | null>(null)
   const [showForm, setShowForm] = React.useState(false)
   const [isPrinting, setIsPrinting] = React.useState(false)
 
   React.useEffect(() => {
-    localStorage.setItem('housekeeperSchedules', JSON.stringify(schedules))
+    try {
+      localStorage.setItem('housekeeperSchedules', JSON.stringify(schedules))
+      console.log('🔍 App Debug - localStorage saved:', schedules.length, 'items')
+    } catch (error) {
+      console.error('🔍 App Debug - localStorage save error:', error)
+    }
   }, [schedules])
 
   const handleAddSchedule = (data: Schedule) => {
@@ -250,30 +271,11 @@ function App() {
         {/* Schedule Table - Screen View */}
         {!isPrinting && (
           <div className="no-print">
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg">Current Schedules</CardTitle>
-                    <Badge variant="secondary" className="ml-2">
-                      {schedules.length}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>Last updated {new Date().toLocaleTimeString()}</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ScheduleTable
-                  schedules={schedules}
-                  onEdit={handleEditSchedule}
-                  onDelete={handleDeleteSchedule}
-                />
-              </CardContent>
-            </Card>
+            <ScheduleTable
+              schedules={schedules}
+              onEdit={handleEditSchedule}
+              onDelete={handleDeleteSchedule}
+            />
           </div>
         )}
 

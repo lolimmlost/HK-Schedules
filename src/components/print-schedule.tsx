@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { User, Calendar, Clock } from "lucide-react"
+
+import { formatDate, getDuration } from "@/lib/utils"
 import type { Schedule } from "./schedule-form"
 
 interface PrintScheduleProps {
@@ -10,28 +12,7 @@ interface PrintScheduleProps {
 }
 
 export function PrintSchedule({ schedules, companyName = "Housekeeper Services", printedAt = new Date() }: PrintScheduleProps) {
-  const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return "No date assigned"
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
 
-  const getDuration = (start: string, end: string) => {
-    const startTime = new Date(`2000-01-01T${start}:00`)
-    const endTime = new Date(`2000-01-01T${end}:00`)
-    const diff = endTime.getTime() - startTime.getTime()
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`
-    }
-    return `${minutes}m`
-  }
 
   const totalDuration = schedules.reduce((total, schedule) => {
     const startTime = new Date(`2000-01-01T${schedule.start}:00`)
@@ -185,8 +166,8 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
                       </td>
 
                       {/* Duration */}
-                      <td className="border border-gray-300 print:border-black p-4 text-center print:p-3 print:hidden">
-                        <Badge variant="secondary" className="text-xs">
+                      <td className="border border-gray-300 print:border-black p-4 text-center print:p-3">
+                        <Badge variant="secondary" className="text-xs print:text-sm">
                           {getDuration(schedule.start, schedule.end)}
                         </Badge>
                       </td>
