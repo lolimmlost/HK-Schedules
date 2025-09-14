@@ -1,10 +1,13 @@
 import * as React from "react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScheduleForm } from "@/components/schedule-form"
 import { ScheduleTable } from "@/components/schedule-table"
+import { PrintSchedule } from "@/components/print-schedule"
 import { Schedule } from "@/components/schedule-form"
+import { Plus, Download, Upload, Printer, Calendar, User, Clock, List } from "lucide-react"
 import './index.css'
 
 function App() {
@@ -14,6 +17,7 @@ function App() {
   })
   const [editingSchedule, setEditingSchedule] = React.useState<Schedule | null>(null)
   const [showForm, setShowForm] = React.useState(false)
+  const [isPrinting, setIsPrinting] = React.useState(false)
 
   React.useEffect(() => {
     localStorage.setItem('housekeeperSchedules', JSON.stringify(schedules))
@@ -134,39 +138,84 @@ function App() {
   }
 
   const handlePrint = () => {
-    window.print()
+    setIsPrinting(true)
+    // Small delay to ensure print styles are applied
+    setTimeout(() => {
+      window.print()
+      setIsPrinting(false)
+    }, 100)
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 print:bg-white print:p-0">
-      <header className="text-center mb-8 print:mb-4">
-        <h1 className="text-4xl font-bold text-foreground">Housekeeper Schedule Manager</h1>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 border-b">
+        <div className="container flex h-16 max-w-screen-2xl items-center">
+          <div className="mr-4 hidden md:flex">
+            <Calendar className="h-6 w-6 text-primary" />
+            <span className="sr-only">Housekeeper Schedule Manager</span>
+          </div>
+          <div className="flex-1">
+            <h1 className="text-xl font-semibold">Housekeeper Schedule Manager</h1>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Badge variant="secondary" className="text-sm">
+              {schedules.length} schedule{schedules.length !== 1 ? 's' : ''}
+            </Badge>
+          </div>
+        </div>
       </header>
 
-      <main className="max-w-6xl mx-auto space-y-6 print:space-y-4">
+      <div className="container max-w-screen-2xl mx-auto p-4 space-y-6 py-8">
         {/* Add/Edit Form */}
         {showForm && (
-          <ScheduleForm
-            initialData={editingSchedule || undefined}
-            onSubmit={editingSchedule ? handleUpdateSchedule : handleAddSchedule}
-            onCancel={handleCancelEdit}
-          />
+          <div className="space-y-4">
+            <ScheduleForm
+              initialData={editingSchedule || undefined}
+              onSubmit={editingSchedule ? handleUpdateSchedule : handleAddSchedule}
+              onCancel={handleCancelEdit}
+            />
+          </div>
         )}
 
         {/* Action Buttons */}
         {!showForm && (
           <Card className="no-print">
-            <CardContent className="p-6 flex flex-wrap gap-4 items-center justify-between">
-              <Button onClick={() => setShowForm(true)} className="bg-primary">
-                Add New Schedule
-              </Button>
-              <div className="flex gap-2">
-                <Button onClick={handlePrint} className="no-print">
-                  Print Schedule
-                </Button>
-                <Button onClick={handleExport} className="no-print">
-                  Export CSV
-                </Button>
+            <CardContent className="p-6">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                <div className="flex-1">
+                  <Button 
+                    onClick={() => setShowForm(true)} 
+                    className="w-full sm:w-auto bg-primary hover:bg-primary/90 flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add New Schedule
+                  </Button>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <Button 
+                    onClick={handlePrint} 
+                    variant="outline" 
+                    className="no-print flex items-center gap-2"
+                    disabled={isPrinting}
+                  >
+                    {isPrinting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                        Preparing...
+                      </>
+                    ) : (
+                      <>
+                        <Printer className="h-4 w-4" />
+                        Print Schedule
+                      </>
+                    )}
+                  </Button>
+                  <Button onClick={handleExport} variant="outline" className="no-print flex items-center gap-2">
+                    <Download className="h-4 w-4" />
+                    Export CSV
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -174,63 +223,69 @@ function App() {
 
         {/* Import Section */}
         <Card className="no-print">
-          <CardHeader>
-            <CardTitle>Import Schedules</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Upload className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">Import Schedules</CardTitle>
+            </div>
           </CardHeader>
-          <CardContent className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            <Input
-              id="import-file"
-              type="file"
-              accept=".csv"
-              onChange={handleImport}
-              className="max-w-sm"
-            />
-            <p className="text-sm text-muted-foreground">
-              Import schedules from CSV file (format: Name,Date,Start,End,Tasks...)
-            </p>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <div className="flex-1">
+                <Input
+                  id="import-file"
+                  type="file"
+                  accept=".csv"
+                  onChange={handleImport}
+                  className="w-full"
+                />
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Import schedules from CSV file (format: Name,Date,Start,End,Tasks...)
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Schedule Table */}
-        <div className="no-print">
-          <ScheduleTable
-            schedules={schedules}
-            onEdit={handleEditSchedule}
-            onDelete={handleDeleteSchedule}
+        {/* Schedule Table - Screen View */}
+        {!isPrinting && (
+          <div className="no-print">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg">Current Schedules</CardTitle>
+                    <Badge variant="secondary" className="ml-2">
+                      {schedules.length}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>Last updated {new Date().toLocaleTimeString()}</span>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ScheduleTable
+                  schedules={schedules}
+                  onEdit={handleEditSchedule}
+                  onDelete={handleDeleteSchedule}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Print Schedule - Print View */}
+        {isPrinting && (
+          <PrintSchedule 
+            schedules={schedules} 
+            companyName="Housekeeper Services"
+            printedAt={new Date()}
           />
-        </div>
-        
-        {/* Print-only Table */}
-        <div className="print-only">
-          <h2 className="text-2xl font-semibold mb-4">Current Schedules</h2>
-          {schedules.length === 0 ? (
-            <p>No schedules found.</p>
-          ) : (
-            <table className="w-full border-collapse border border-gray-300 print:border-black">
-              <thead>
-                <tr className="bg-gray-100 print:bg-gray-100">
-                  <th className="border border-gray-300 print:border-black p-2 text-left">Name</th>
-                  <th className="border border-gray-300 print:border-black p-2 text-left">Date</th>
-                  <th className="border border-gray-300 print:border-black p-2 text-left">Start</th>
-                  <th className="border border-gray-300 print:border-black p-2 text-left">End</th>
-                  <th className="border border-gray-300 print:border-black p-2 text-left">Tasks</th>
-                </tr>
-              </thead>
-              <tbody>
-                {schedules.map((schedule) => (
-                  <tr key={schedule.id} className="border-b">
-                    <td className="border border-gray-300 print:border-black p-2">{schedule.name}</td>
-                    <td className="border border-gray-300 print:border-black p-2">{schedule.date || "N/A"}</td>
-                    <td className="border border-gray-300 print:border-black p-2">{schedule.start}</td>
-                    <td className="border border-gray-300 print:border-black p-2">{schedule.end}</td>
-                    <td className="border border-gray-300 print:border-black p-2">{schedule.tasks}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </main>
+        )}
+      </div>
     </div>
   )
 }
