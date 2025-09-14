@@ -111,13 +111,13 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
   const handleCancel = () => {
     setErrors({})
     setFormData({
-      name: "",
-      date: "",
-      start: "",
-      end: "",
-      tasks: "",
+      name: initialData?.name || "",
+      date: initialData?.date || "",
+      start: initialData?.start || "",
+      end: initialData?.end || "",
+      tasks: initialData?.tasks || "",
     })
-    setIsEditing(false)
+    setIsEditing(!!initialData)
     if (onCancel) onCancel()
   }
 
@@ -287,14 +287,15 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
               )}
             </Button>
             
-            {isEditing && (
-              <Button 
-                type="button" 
-                variant="outline" 
+            {onCancel && (
+              <Button
+                type="button"
+                variant="outline"
                 onClick={handleCancel}
                 className="flex-1 sm:w-auto"
                 disabled={isSubmitting}
               >
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2 hidden" />
                 Cancel
               </Button>
             )}
