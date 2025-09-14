@@ -1,3 +1,4 @@
+import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -10,7 +11,6 @@ import {
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { User, Calendar, Clock, Edit, Trash2, Loader2, Plus } from "lucide-react"
-import { useState } from "react"
 
 import type { Schedule } from "./schedule-form"
 
@@ -21,7 +21,9 @@ interface ScheduleTableProps {
 }
 
 export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProps) {
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = React.useState<string | null>(null)
+  const [isSorted, setIsSorted] = React.useState<'name' | 'date' | 'start' | null>(null)
+  const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc')
 
   const handleDelete = async (id: string) => {
     if (deletingId === id) return // Already deleting
@@ -61,6 +63,46 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
     }
     return `${minutes}m`
   }
+
+  const sortedSchedules = React.useMemo(() => {
+    if (!isSorted) return schedules
+
+    return [...schedules].sort((a, b) => {
+      let aValue, bValue
+
+      switch (isSorted) {
+        case 'name':
+          aValue = a.name.toLowerCase()
+          bValue = b.name.toLowerCase()
+          break
+        case 'date':
+          aValue = a.date || ''
+          bValue = b.date || ''
+          break
+        case 'start':
+          aValue = a.start
+          bValue = b.start
+          break
+        default:
+          return 0
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [schedules, isSorted, sortDirection])
+
+  const toggleSort = (column: 'name' | 'date' | 'start') => {
+    if (isSorted === column) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setIsSorted(column)
+      setSortDirection('asc')
+    }
+  }
+
+  const isSmallScreen = window.innerWidth < 768
 
   if (schedules.length === 0) {
     return (
@@ -102,96 +144,175 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
         </div>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-32">Housekeeper</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="w-20 text-center">Time</TableHead>
-                <TableHead className="w-20 text-center">Duration</TableHead>
-                <TableHead className="max-w-xs">Tasks</TableHead>
-                <TableHead className="w-32 text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {schedules.map((schedule) => (
-                <TableRow key={schedule.id} className="border-b last:border-b-0 hover:bg-accent/50">
-                  <Td className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User className="h-4 w-4 text-primary" />
-                      </div>
-                      <span>{schedule.name}</span>
-                    </div>
-                  </Td>
-                  <Td>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{formatDate(schedule.date)}</span>
-                    </div>
-                  </Td>
-                  <Td className="text-center">
-                    <div className="text-sm">
-                      <div>{schedule.start}</div>
-                      <div className="text-xs text-muted-foreground font-mono">{schedule.end}</div>
-                    </div>
-                  </Td>
-                  <Td className="text-center">
-                    <Badge variant="outline" className="text-xs">
-                      {getDuration(schedule.start, schedule.end)}
-                    </Badge>
-                  </Td>
-                  <Td className="max-w-xs">
-                    <div className="text-sm line-clamp-2">
-                      {schedule.tasks || "No tasks specified"}
-                    </div>
-                  </Td>
-                  <Td className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onEdit(schedule)}
-                        className="h-8 w-8 p-0"
-                        title="Edit schedule"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(schedule.id)}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
-                        disabled={deletingId === schedule.id}
-                        title="Delete schedule"
-                      >
-                        {deletingId === schedule.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </Td>
+        {/* Desktop Table View */}
+        {!isSmallScreen && (
+          <div className="overflow-x-auto hidden sm:table-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead 
+                    className="cursor-pointer hover:text-primary/80" 
+                    onClick={() => toggleSort('name')}
+                  >
+                    Housekeeper {isSorted === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:text-primary/80" 
+                    onClick={() => toggleSort('date')}
+                  >
+                    Date {isSorted === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  </TableHead>
+                  <TableHead className="w-20 text-center">Time</TableHead>
+                  <TableHead className="w-20 text-center">Duration</TableHead>
+                  <TableHead className="max-w-xs">Tasks</TableHead>
+                  <TableHead className="w-32 text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {sortedSchedules.map((schedule) => (
+                  <TableRow key={schedule.id} className="border-b last:border-b-0 hover:bg-accent/50">
+                    <Td className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                        <span>{schedule.name}</span>
+                      </div>
+                    </Td>
+                    <Td>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{formatDate(schedule.date)}</span>
+                      </div>
+                    </Td>
+                    <Td className="text-center">
+                      <div className="text-sm">
+                        <div>{schedule.start}</div>
+                        <div className="text-xs text-muted-foreground font-mono">{schedule.end}</div>
+                      </div>
+                    </Td>
+                    <Td className="text-center">
+                      <Badge variant="outline" className="text-xs">
+                        {getDuration(schedule.start, schedule.end)}
+                      </Badge>
+                    </Td>
+                    <Td className="max-w-xs">
+                      <div className="text-sm line-clamp-2">
+                        {schedule.tasks || "No tasks specified"}
+                      </div>
+                    </Td>
+                    <Td className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEdit(schedule)}
+                          className="h-8 w-8 p-0"
+                          title="Edit schedule"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(schedule.id)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
+                          disabled={deletingId === schedule.id}
+                          title="Delete schedule"
+                        >
+                          {deletingId === schedule.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </Td>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
 
-        {/* Mobile empty state - hidden on desktop */}
-        <div className="md:hidden mt-4 p-4 bg-muted rounded-md text-center">
-          <User className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-          <h3 className="text-lg font-medium mb-1">No schedules yet</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Start by adding your first housekeeper schedule above.
-          </p>
-          <Button variant="outline" size="sm" className="w-full max-w-xs">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Schedule
-          </Button>
-        </div>
+        {/* Mobile Card View */}
+        {isSmallScreen && (
+          <div className="space-y-4">
+            {sortedSchedules.map((schedule) => (
+              <Card key={schedule.id} className="w-full">
+                <CardHeader className="flex flex-row items-start justify-between p-4 pb-2">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-medium text-foreground truncate">{schedule.name}</h3>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDate(schedule.date)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onEdit(schedule)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(schedule.id)}
+                      className="h-8 w-8 p-0 text-destructive"
+                      disabled={deletingId === schedule.id}
+                    >
+                      {deletingId === schedule.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <div className="grid grid-cols-1 gap-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground flex items-center gap-2">
+                        <Clock className="h-3 w-3" />
+                        Time
+                      </span>
+                      <span className="font-medium">{schedule.start} - {schedule.end}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Duration</span>
+                      <Badge variant="outline" className="text-xs px-2 py-0.5">
+                        {getDuration(schedule.start, schedule.end)}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-muted-foreground">Tasks</span>
+                      <div className="ml-2 space-y-1">
+                        {schedule.tasks ? (
+                          schedule.tasks.split(',').map((task, idx) => (
+                            <div key={idx} className="flex items-start gap-2 text-xs">
+                              <div className="w-1 h-1 rounded-full bg-foreground mt-1.5 flex-shrink-0"></div>
+                              <span>{task.trim()}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic">No tasks specified</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   )
