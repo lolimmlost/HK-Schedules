@@ -1,62 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Housekeeper Scheduler</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <header>
-        <h1>Housekeeper Schedule Manager</h1>
-    </header>
-    <main>
-        <section id="add-schedule">
-            <h2>Add New Schedule</h2>
-            <form id="schedule-form">
-                <label for="name">Housekeeper Name:</label>
-                <input type="text" id="name" required>
-                <label for="date">Date (optional):</label>
-                <input type="date" id="date">
-                <label for="start">Start Time:</label>
-                <input type="time" id="start" required>
-                <label for="end">End Time:</label>
-                <input type="time" id="end" required>
-                <label for="tasks">Tasks:</label>
-                <textarea id="tasks" rows="3"></textarea>
-                <button type="submit">Add Schedule</button>
-                <button type="button" id="cancel-edit" style="display:none;">Cancel Edit</button>
-            </form>
-        </section>
-        <section id="import-section">
-            <h2>Import Schedules</h2>
-            <input type="file" id="import-file" accept=".csv">
-            <button id="import-btn">Import CSV</button>
-        </section>
-        <button id="print-btn">Print Schedule</button>
-        <button id="export-btn">Export CSV</button>
-        <section id="schedule-table">
-            <h2>Current Schedules</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Date</th>
-                        <th>Start</th>
-                        <th>End</th>
-                        <th>Tasks</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="schedule-body">
-                    <!-- Entries will be added here -->
-                </tbody>
-            </table>
-        </section>
-    </main>
-    <script src="script.js"></script>
-    <script>
-        console.log('Inline script executed');
-    </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HK Schedules</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
