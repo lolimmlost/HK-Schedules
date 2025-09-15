@@ -46,6 +46,7 @@ This brownfield enhancement addresses these by extending existing components (e.
 
 ### 3.1 Core Features (Brownfield Extensions)
 #### 3.1.1 Multi-Schedule Dashboard (FR-1, US-001)
+- **Current Status (2025-09-15)**: Partial - Basic single-entry form implemented; localStorage supports flat array CRUD. Missing: Dashboard component, dynamic multi-entry support, category filtering, search/pagination.
 - New Dashboard component (`src/components/Dashboard.tsx`) replacing single-view entry.
 - List all schedules as responsive cards/grid: Title, category badge, entry count, last updated, quick actions (view/edit/delete).
 - Search: Global input for title/description (case-insensitive, debounce 300ms).
@@ -59,6 +60,7 @@ This brownfield enhancement addresses these by extending existing components (e.
 - AC: Loads 50 schedules <1s; search updates live; delete confirms with toast; mobile stacks as list.
 
 #### 3.1.2 Enhanced Schedule Viewing and Filtering (FR-2, US-002)
+- **Current Status (2025-09-15)**: Planned - Blocked by US-001 (requires entries array for assignee data). Existing table displays flat single-entry schedules; no filtering implemented.
 - Extend existing `src/components/schedule-table.tsx`: Add assignee filter dropdown (dynamic from entries or config).
 - Bulk Actions: Checkbox selection for rows; apply status changes (Pending/Completed) or delete; "Apply to Selected" button.
 - Sort/Filter Persistence: Save user preferences in localStorage per schedule.
@@ -70,6 +72,7 @@ This brownfield enhancement addresses these by extending existing components (e.
 - AC: Filter re-renders <100ms; bulk updates auto-save; validates no overlaps post-filter.
 
 #### 3.1.3 Multi-Assignee Form Updates (FR-3, US-003)
+- **Current Status (2025-09-15)**: Planned - Depends on US-001 dynamic form refactor (current form is single-entry only; no assignee field or multi-select). No react-hook-form integration yet.
 - Extend `src/components/schedule-form.tsx`: Replace single assignee input with multi-select dropdown (searchable, max 10).
 - Predefined Assignees: Configurable list in localStorage (e.g., ["John Doe", "Jane Smith"]); allow add new.
 - Validation: Min 1 assignee per entry; unique per time slot; total duration calculation (sum entry durations).
@@ -81,6 +84,7 @@ This brownfield enhancement addresses these by extending existing components (e.
 - AC: Multi-select validates emails/names; duration updates on change; form submits only if valid.
 
 #### 3.1.4 Shareable Exports and Views (FR-4, US-004)
+- **Current Status (2025-09-15)**: Planned - No sharing features implemented. Existing CSV/print work for single schedules; lacks URLs, PIN validation, read-only views. Blocked by US-001 multi-schedule model.
 - Extend `src/components/print-schedule.tsx`: Add "Share Link" option generating unique URL (`/share/:shareId`) with optional 4-digit PIN.
 - Read-Only Share View: New route/component (`ShareView.tsx`); loads Schedule by shareId, validates PIN/expiry (7 days default).
 - Export Enhancements: PDF/CSV include category/assignees; iCal for events (basic: per entry as VEVENT).
@@ -285,14 +289,17 @@ Extend `src/lib/api.ts` with localStorage wrappers:
 ## 10. Requirements Traceability Matrix
 | Req ID | Requirement | User Story | Test Case | Status |
 |--------|-------------|------------|-----------|--------|
-| FR-1 | Multi-Dashboard | US-001 | TC-001: Load 20 schedules | Planned |
-| FR-2 | Assignee Filter | US-002 | TC-002: Bulk update 10 rows | Planned |
-| FR-3 | Multi-Select Form | US-003 | TC-003: Validate assignees array | Planned |
+| FR-1 | Multi-Dashboard | US-001 | TC-001: Load 20 schedules | In Progress (Partial: Basic form exists; missing dynamic entries/dashboard) |
+| FR-2 | Assignee Filter | US-002 | TC-002: Bulk update 10 rows | Planned (Blocked by US-001 model) |
+| FR-3 | Multi-Select Form | US-003 | TC-003: Validate assignees array | Planned (Depends on US-001 form refactor) |
 | FR-4 | Share Links | US-004 | TC-004: PIN validation flow | Planned |
 | NFR-1 | <1s Load | N/A | TC-005: Performance profile | Planned |
 | ... | ... | ... | ... | ... |
 
+**US-001 Gaps (2025-09-15 Review)**: Single-entry form (name/date/times/tasks); no dynamic entries array, full fields (title/category/recurrence), Zod validation, migration to v2 model. ~80% incomplete; backlog updated.
+
 **Change Log**:
 - v1.0 (2025-09-14): Initial brownfield PRD for BE-001.
+- v1.1 (2025-09-15): US-001 review - Updated status to In Progress (Partial); added gaps (dynamic form, dashboard, model migration); traceability reflects code analysis (single-entry vs multi).
 
 This PRD is a living extension of HK-Schedules-PRD.md; review bi-weekly.

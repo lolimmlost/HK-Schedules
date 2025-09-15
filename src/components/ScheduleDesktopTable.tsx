@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ChevronDown, ChevronRight, User, Calendar, Clock, Edit, Trash2, Loader2 } from "lucide-react"
+import { ChevronDown, ChevronRight, User, Calendar, Edit, Trash2, Loader2 } from "lucide-react"
 import { formatDate, getDuration } from "@/lib/utils"
 import type { Schedule, Entry } from "./schedule-form"
 
@@ -169,7 +169,7 @@ export function ScheduleDesktopTable({
                 </TableRow>
 
                 {/* Entry Rows - only show when expanded */}
-                {isExpanded && scheduleEntries.map((entry, index) => (
+                {isExpanded && scheduleEntries.map((entry) => (
                   <TableRow 
                     key={`${schedule.id}-entry-${entry.id}`} 
                     className={`hover:bg-accent/50 ${entry.assignee === selectedAssignee && selectedAssignee !== 'all' ? 'bg-primary/5 border-l-4 border-primary/20' : ''}`}

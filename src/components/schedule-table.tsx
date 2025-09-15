@@ -15,7 +15,7 @@ import { User, Calendar, Clock, Edit, Trash2, Loader2, Plus, Filter } from "luci
 import { formatDate, getDuration } from "@/lib/utils"
 import { useScheduleFilter } from "@/lib/useScheduleFilter"
 import { ScheduleDesktopTable } from "./ScheduleDesktopTable"
-import { ScheduleMobileCards } from "./ScheduleMobileCards"
+//import { ScheduleMobileCards } from "./ScheduleMobileCards"
 import type { Schedule, Entry } from "./schedule-form"
 interface ScheduleTableProps {
   schedules: Schedule[] | { schedules: Schedule[] } | null

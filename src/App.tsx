@@ -9,7 +9,7 @@ import { useCSVExport } from "@/lib/useCSVExport"
 import { AppHeader } from "@/components/AppHeader"
 import { ActionBar } from "@/components/ActionBar"
 import { ImportSection } from "@/components/ImportSection"
-import { User, Plus, Download, Upload, Printer, Calendar, Clock, List } from "lucide-react"
+//import { User, Plus, Download, Upload, Printer, Calendar, Clock, List } from "lucide-react"
 import './index.css'
 
 function App() {
@@ -19,7 +19,7 @@ function App() {
     addSchedule,
     updateSchedule,
     deleteSchedule,
-    getSchedules
+    //getSchedules
   } = useScheduleStore()
 
   // Form state
@@ -113,20 +113,155 @@ function App() {
   }
 
   // Action handlers
+  /**
+   * Handles CSV export of schedules with comprehensive error handling and debugging
+   *
+   * This function manages the complete export workflow including:
+   * - Data validation and defensive copying to prevent circular references
+   * - Format detection (array vs object with .schedules property)
+   * - Comprehensive logging for debugging data issues
+   * - Error handling for CSV generation and browser download failures
+   * - User feedback via alerts for success/failure states
+   *
+   * @returns {void}
+   */
   const handleExport = () => {
-    console.log('🔍 App - handleExport called, raw schedules:', schedules, 'type:', typeof schedules)
-    console.log('🔍 App - localStorage schedules:', localStorage.getItem('housekeeperSchedules'))
+    console.log('🔍 App - handleExport called')
+    console.log('🔍 App - raw schedules:', schedules)
+    console.log('🔍 App - schedules type:', typeof schedules)
+    console.log('🔍 App - schedules isArray:', Array.isArray(schedules))
+    console.log('🔍 App - schedules length:', schedules?.length)
+    console.log('🔍 App - localStorage raw:', localStorage.getItem('housekeeperSchedules'))
     
-    // Ensure schedules is always an array - handle both array and storage object formats
-    const safeSchedules = Array.isArray(schedules) ? schedules : (schedules?.schedules || [])
-    
-    console.log('🔍 App - safeSchedules length:', safeSchedules.length, 'first item:', safeSchedules[0])
-    
-    if (safeSchedules.length === 0) {
-      alert('No schedules to export. Check browser console for debug info.')
-      return
+    try {
+      /**
+       * Ensure schedules is always a valid Schedule[] array for export
+       * Handles multiple data formats from localStorage and state management
+       */
+      let safeSchedules: Schedule[] = []
+      
+      if (Array.isArray(schedules)) {
+        /**
+         * Create defensive copy of schedules to break potential circular references
+         * Ensures all required Schedule properties exist for CSV export
+         * Prevents React state object references from causing serialization errors
+         */
+        console.log('🔍 App - schedules is array, creating defensive copy')
+        safeSchedules = schedules.map((schedule, index) => {
+          // Defensive copy to break circular references and ensure data integrity
+          return {
+            id: schedule.id || `temp-${index}`,
+            name: schedule.name || '',
+            date: schedule.date || '',
+            start: schedule.start || '',
+            end: schedule.end || '',
+            tasks: schedule.tasks || '',
+            /**
+             * Safely handle entries array - create shallow copies to prevent deep circular references
+             * Ensures each Entry has all required properties with fallback defaults
+             */
+            entries: schedule.entries ? schedule.entries.map((entry: any, entryIndex: number) => ({
+              id: entry.id || `temp-entry-${index}-${entryIndex}`,
+              assignee: entry.assignee || '',
+              time: entry.time || '',
+              duration: entry.duration || '',
+              tasks: entry.tasks || '',
+              status: entry.status || 'pending'
+            })) : undefined
+          }
+        })
+      } else if (schedules && typeof schedules === 'object' && 'schedules' in schedules && Array.isArray((schedules as any).schedules)) {
+        /**
+         * Handle legacy object format where schedules are nested under .schedules property
+         * This can occur with corrupted localStorage data or version migration issues
+         */
+        console.log('🔍 App - schedules has .schedules property, using that')
+        safeSchedules = (schedules as any).schedules
+      } else {
+        /**
+         * Fallback for unknown data formats - prevents crashes from malformed state
+         * Logs the unexpected format for debugging while providing empty array fallback
+         */
+        console.log('🔍 App - schedules format unknown, using empty array')
+        safeSchedules = []
+      }
+      
+      /**
+       * Log safeSchedules creation details for debugging
+       * Verifies array structure and basic data integrity before CSV processing
+       */
+      console.log('🔍 App - safeSchedules created, type:', typeof safeSchedules, 'isArray:', Array.isArray(safeSchedules))
+      console.log('🔍 App - safeSchedules length:', safeSchedules.length)
+      
+      if (safeSchedules.length > 0) {
+        const firstSchedule = safeSchedules[0]
+        /**
+         * Detailed logging of first schedule for validation
+         * Helps identify common issues: empty names, missing required fields, type mismatches
+         */
+        console.log('🔍 App - safeSchedules[0]:', firstSchedule)
+        console.log('🔍 App - safeSchedules[0] keys:', Object.keys(firstSchedule))
+        console.log('🔍 App - safeSchedules[0].name:', firstSchedule.name, 'type:', typeof firstSchedule.name, 'trimmed:', firstSchedule.name?.trim())
+        console.log('🔍 App - safeSchedules[0].start:', firstSchedule.start)
+        console.log('🔍 App - safeSchedules[0].date:', firstSchedule.date)
+        console.log('🔍 App - safeSchedules[0].tasks:', firstSchedule.tasks)
+        console.log('🔍 App - safeSchedules[0].entries:', firstSchedule.entries)
+        console.log('🔍 App - safeSchedules[0] stringified length:', JSON.stringify(firstSchedule).length)
+      }
+      
+      if (safeSchedules.length === 0) {
+        console.log('🔍 App - No schedules to export')
+        alert('No schedules to export. Check browser console for debug info.')
+        return
+      }
+      
+      /**
+       * Pre-export validation logging
+       * Shows sample data structure before passing to CSV generation
+       */
+      console.log('🔍 App - About to call exportCSV with safeSchedules')
+      console.log('🔍 App - safeSchedules sample:', safeSchedules.slice(0, 2))
+      
+      /**
+       * Execute CSV export using custom hook
+       * The useCSVExport hook handles:
+       * - CSV generation with proper field escaping and UTF-8 BOM
+       * - Chrome-compatible Blob creation and download with fallback methods
+       * - Support for both legacy (flat) and new (entries array) schedule formats
+       * - Comprehensive data validation and error reporting
+       */
+      const result = exportCSV(safeSchedules)
+      console.log('🔍 App - exportCSV completed, result:', result)
+      
+      /**
+       * Handle export result and provide user feedback
+       * Success: Log completion details
+       * Failure: Show error alert and log details for debugging
+       */
+      if (result.success) {
+        console.log('🔍 App - Export successful:', result.filename, result.rowCount, 'rows')
+        // TODO: Add success toast notification for better UX
+      } else {
+        console.error('🔍 App - Export failed:', result.error)
+        alert(`Export failed: ${result.error}`)
+      }
+      
+    } catch (error) {
+      /**
+       * Comprehensive error handling for unexpected failures during export
+       * Catches and reports:
+       * - Circular reference errors during JSON serialization
+       * - Memory issues with large datasets
+       * - Browser download blocking (Chrome security policies)
+       * - Network or permission errors
+       * - Unexpected data structure issues
+       */
+      console.error('🔍 App - handleExport error:', error)
+      console.error('🔍 App - Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      console.error('🔍 App - Error message:', errorMessage)
+      alert(`Export failed with error: ${errorMessage}. Check console for details.`)
     }
-    exportCSV(safeSchedules)
   }
 
   const handlePrint = () => {

@@ -6,8 +6,16 @@
 - ✅ Display-only migration logic in schedule-table.tsx (safe, non-destructive)
 - ✅ App stable - schedules display and add/edit work normally
 - ✅ Assignee filtering implemented with dropdown and visual feedback
+- ⚠️ US-001 Partial: Single-entry form exists but lacks dynamic entries array, full fields (title, category, recurrence), advanced validation (Zod, overlaps); no dashboard for multi-schedules
 
-## Remaining Tasks
+## Remaining Tasks (US-001 Dependencies)
+- [ ] US-001: Implement dynamic entries array in ScheduleForm.tsx (add/remove rows for time/task/assignee/etc.)
+- [ ] US-001: Add required fields (title max 100, description max 500, category dropdown)
+- [ ] US-001: Entry fields (duration minutes, status select, notes textarea max 300, recurrence select)
+- [ ] US-001: Advanced validation (Zod schemas, unique times, no overlaps, min 1 entry)
+- [ ] US-001: Multi-schedule dashboard (Dashboard.tsx with search/filter/pagination)
+- [ ] US-001: Data model migration (v1 single to v2 array with category/version)
+- [ ] US-001: Install deps (react-hook-form, zod, uuid, zustand)
 
 ### 1. UI Components
 - [x] Create shadcn/ui Select component for assignee dropdown (after @radix-ui/react-select install)
@@ -59,6 +67,11 @@
 - [x] AC: Filter re-renders <100ms; bulk updates auto-save; validates no overlaps post-filter
 - [x] Visuals: Assignee badges in rows; filter chip with count; highlight filtered entries
 - [ ] Edge Cases: No assignees filter shows all; bulk max 50 rows; undo last action via toast
+
+## US-001 Status Notes (2025-09-15 Review)
+- Partial implementation: Basic single-entry form with validation and localStorage CRUD.
+- Gaps: ~80% incomplete; focus on dynamic form and dashboard for US-002/US-003 enablement.
+- Risks: Migration compatibility for existing data; performance for 130+ units (US-003).
 
 ## Dependencies
 - `@radix-ui/react-select` for shadcn Select component

@@ -1,4 +1,4 @@
-import React from 'react'
+//import React from 'react'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -170,7 +170,7 @@ export function ScheduleMobileCards({
                   )}
 
                   {/* Individual Entry Cards */}
-                  {scheduleEntries.map((entry, index) => (
+                  {scheduleEntries.map((entry) => (
                     <div 
                       key={`${schedule.id}-entry-${entry.id}`}
                       className={`p-3 rounded-lg border ${

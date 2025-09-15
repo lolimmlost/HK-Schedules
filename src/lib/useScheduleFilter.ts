@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { formatDate, getDuration } from './utils'
+import { getDuration } from './utils'
 import type { Schedule, Entry } from '../components/schedule-form'
 
 // Custom hook for schedule filtering logic

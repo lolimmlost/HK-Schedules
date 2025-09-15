@@ -6,7 +6,7 @@
 **Version**: 1.0  
 **Created**: 2025-09-14  
 **Owner**: Product Manager (Sonoma)  
-**Status**: Planned  
+**Status**: In Progress (US-001 Partial)
 **Priority**: High  
 
 ### Description
@@ -35,43 +35,47 @@ This brownfield epic extends the existing HK-Schedules housekeeper management ap
 ### User Stories
 #### US-001: As an Admin, I want a dashboard to list and manage multiple schedules so I can organize by client or shift.
 - **Details**: Replace single-schedule view with a card/grid list of saved schedules; include search by title, filter by category/date, and actions (view/edit/delete/archive).
+- **Current Status (2025-09-15)**: Partial - Basic single-entry form with validation and localStorage CRUD implemented in ScheduleForm.tsx and useScheduleStore.ts. App.tsx integrates form but lacks dashboard/multi-schedule grouping. Missing: Dashboard.tsx, dynamic entries array, category metadata, v2 data model migration.
 - **Acceptance Criteria**:
-  - Dashboard loads all schedules from localStorage on app init; empty state shows "Create First Schedule" with form link.
-  - Search matches title/description case-insensitively; filters update in <500ms.
-  - CRUD: Create redirects to form pre-filled with metadata; edit loads current schedule; delete confirms with undo toast (using `src/components/ui/alert.tsx`).
-  - Responsive: Grid on desktop (3 cols), list on mobile; persists filters in localStorage.
-  - Edge Cases: Handle 50+ schedules with pagination; quota warning if >5MB.
-- **Effort**: 1 sprint (leverage existing form/table; add `Dashboard.tsx`).
+  - [ ] Dashboard loads all schedules from localStorage on app init; empty state shows "Create First Schedule" with form link.
+  - [ ] Search matches title/description case-insensitively; filters update in <500ms.
+  - [x] CRUD: Create redirects to form pre-filled with metadata; edit loads current schedule; delete confirms with undo toast (using `src/components/ui/alert.tsx`).
+  - [ ] Responsive: Grid on desktop (3 cols), list on mobile; persists filters in localStorage.
+  - [ ] Edge Cases: Handle 50+ schedules with pagination; quota warning if >5MB.
+- **Effort**: 1 sprint (leverage existing form/table; add `Dashboard.tsx`). Gaps: ~80% rework for dynamic form/model.
 
 #### US-002: As a Team Lead, I want to filter the schedule table by assignee so I can review individual housekeeper workloads.
 - **Details**: Extend existing `schedule-table.tsx` with dropdown filter for assignees (from predefined list or dynamic from entries); include bulk status updates for selected rows.
+- **Current Status (2025-09-15)**: Planned - Blocked by US-001 data model (entries array needed for assignee filtering). Existing table shows flat schedules; no assignee field in current Schedule interface.
 - **Acceptance Criteria**:
-  - Filter dropdown populates from unique assignees in current schedule; "All" option shows full table.
-  - Filtering re-renders table instantly (<100ms); preserves sort/pagination state.
-  - Bulk actions: Select rows via checkboxes; update status (Pending/Completed) or delete with confirmation; auto-save changes.
-  - Visual: Badge count in filter (e.g., "John Doe (5 tasks)"); highlight filtered rows.
-  - Integration: Works with existing inline editing; validates no overlapping assignee times.
-- **Effort**: 1 week (build on shadcn/ui table; add Zustand slice for filters).
+  - [ ] Filter dropdown populates from unique assignees in current schedule; "All" option shows full table.
+  - [ ] Filtering re-renders table instantly (<100ms); preserves sort/pagination state.
+  - [ ] Bulk actions: Select rows via checkboxes; update status (Pending/Completed) or delete with confirmation; auto-save changes.
+  - [ ] Visual: Badge count in filter (e.g., "John Doe (5 tasks)"); highlight filtered rows.
+  - [ ] Integration: Works with existing inline editing; validates no overlapping assignee times.
+- **Effort**: 1 week (build on shadcn/ui table; add Zustand slice for filters). Depends on US-001 completion.
 
 #### US-003: As an Admin, I want to assign multiple housekeepers to schedule entries so teams can handle complex shifts.
 - **Details**: Update `schedule-form.tsx` to support multi-select assignee field (dropdown with search); calculate total duration across entries.
+- **Current Status (2025-09-15)**: Planned - Depends on US-001 form refactor (dynamic entries array required for multi-assignee per entry). Current form is single-entry only; no assignee field implemented.
 - **Acceptance Criteria**:
-  - Form adds multi-select input (using shadcn/ui or react-select); predefined assignees from local config (e.g., ["John Doe", "Jane Smith"]).
-  - Validation: At least one assignee per entry; no duplicates; email format if using emails.
-  - Dynamic entries: Add/remove rows preserves assignee selections; total duration footer updates live.
-  - Save: Serializes assignees as array in ScheduleEntry (per PRD 4.2 interface).
-  - UX: Pre-populate from previous schedules; character limits enforced (tasks max 500 chars per README).
-- **Effort**: 1 week (extend react-hook-form; update data model minimally).
+  - [ ] Form adds multi-select input (using shadcn/ui or react-select); predefined assignees from local config (e.g., ["John Doe", "Jane Smith"]).
+  - [ ] Validation: At least one assignee per entry; no duplicates; email format if using emails.
+  - [ ] Dynamic entries: Add/remove rows preserves assignee selections; total duration footer updates live.
+  - [ ] Save: Serializes assignees as array in ScheduleEntry (per PRD 4.2 interface).
+  - [ ] UX: Pre-populate from previous schedules; character limits enforced (tasks max 500 chars per README).
+- **Effort**: 1 week (extend react-hook-form; update data model minimally). Blocked by US-001 dynamic form.
 
 #### US-004: As an Event Coordinator, I want shareable export links for schedules so I can distribute to team without full app access.
 - **Details**: Enhance `print-schedule.tsx` and CSV export to generate unique share links (local UUID); include password mock or expiration for basic security.
+- **Current Status (2025-09-15)**: Planned - No implementation started. Existing exports (CSV/print) work for single schedules but lack sharing URLs, PIN validation, or read-only views. Depends on US-001 multi-schedule model for shareable entities.
 - **Acceptance Criteria**:
-  - Export button dropdown: PDF/CSV/iCal; "Share Link" generates URL like `/view/:id` with optional PIN (stored in localStorage).
-  - Shared view: Read-only table (no edits); auto-loads schedule by ID; expires after 7 days or PIN mismatch.
-  - Formats: PDF preserves styling (jsPDF); CSV includes assignees/categories; iCal for calendar import (future PRD 3.1.3).
-  - Tracking: Log shares in console (for analytics); download count badge.
-  - Edge Cases: Invalid ID shows 404; offline shares prompt save-as-JSON.
-- **Effort**: 1-2 weeks (extend existing exports; add simple router guard).
+  - [ ] Export button dropdown: PDF/CSV/iCal; "Share Link" generates URL like `/view/:id` with optional PIN (stored in localStorage).
+  - [ ] Shared view: Read-only table (no edits); auto-loads schedule by ID; expires after 7 days or PIN mismatch.
+  - [ ] Formats: PDF preserves styling (jsPDF); CSV includes assignees/categories; iCal for calendar import (future PRD 3.1.3).
+  - [ ] Tracking: Log shares in console (for analytics); download count badge.
+  - [ ] Edge Cases: Invalid ID shows 404; offline shares prompt save-as-JSON.
+- **Effort**: 1-2 weeks (extend existing exports; add simple router guard). Blocked by US-001/US-003 data model.
 
 ### Risks and Mitigations
 | Risk | Probability | Impact | Mitigation |
@@ -86,6 +90,7 @@ This brownfield epic extends the existing HK-Schedules housekeeper management ap
 - **Existing Codebase**: Builds on README features (CSV import/export, print view); no breaking changes to core components.
 - **Success Metrics**: 80% user adoption for multi-schedule; <1% error rate on exports (PRD 1.4).
 - **Definition of Done**: All stories accepted; E2E tests pass (Cypress); demo with 3 personas; deploy to Vercel staging.
+- **Progress Notes (2025-09-15)**: US-001 foundational gaps block US-002/US-003; prioritize data model migration and dynamic entries. Backlog updated in docs/US-002-backlog.md.
 
 ### Next Steps
 - Sprint Planning: Break into tickets; assign to Full-Stack Dev.
