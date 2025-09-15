@@ -2,6 +2,14 @@ import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Table,
   TableBody,
   Td,
@@ -10,28 +18,111 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { User, Calendar, Clock, Edit, Trash2, Loader2, Plus } from "lucide-react"
+import { User, Calendar, Clock, Edit, Trash2, Loader2, Plus, Filter } from "lucide-react"
 import { formatDate, getDuration } from "@/lib/utils"
-import type { Schedule } from "./schedule-form"
+import type { Schedule, Entry } from "./schedule-form"
 
 interface ScheduleTableProps {
-  schedules: Schedule[]
+  schedules: Schedule[] | { schedules: Schedule[] } | null
   onEdit: (schedule: Schedule) => void
   onDelete: (id: string) => void
 }
 
 export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProps) {
+  // Ensure schedules is always an array - handle both array and storage object formats
+  const safeSchedules: Schedule[] = Array.isArray(schedules) ? schedules : (schedules?.schedules || [])
+  
+  // Migrate legacy schedules to new format
+  const migrateLegacySchedule = (legacy: Schedule): Schedule => {
+    if (legacy.entries && legacy.entries.length > 0) {
+      // Already migrated
+      return legacy
+    }
+    
+    if (!legacy.start || !legacy.end) {
+      return legacy
+    }
+    
+    // Handle empty tasks gracefully
+    const tasks = legacy.tasks || "No tasks specified"
+    
+    const duration = getDuration(legacy.start, legacy.end)
+    const entry: Entry = {
+      id: `${legacy.id}-entry-1`,
+      time: legacy.start,
+      duration,
+      tasks,
+      assignee: legacy.name, // Legacy: housekeeper name becomes assignee
+      status: 'pending'
+    }
+    
+    return {
+      ...legacy,
+      entries: [entry],
+      // Keep legacy fields for backward compatibility during transition
+      start: legacy.start,
+      end: legacy.end,
+      tasks
+    }
+  }
+  
+  const migratedSchedules = React.useMemo(() => {
+    return safeSchedules.map(migrateLegacySchedule)
+  }, [safeSchedules])
+  
   // Debug logging
   React.useEffect(() => {
-    console.log('ScheduleTable received schedules:', schedules)
-    if (schedules.length === 0) {
+    console.log('ScheduleTable received schedules:', safeSchedules)
+    if (safeSchedules.length === 0) {
       console.log('No schedules - checking localStorage:', localStorage.getItem('housekeeperSchedules'))
     }
-  }, [schedules])
+  }, [safeSchedules])
 
   const [deletingId, setDeletingId] = React.useState<string | null>(null)
   const [isSorted, setIsSorted] = React.useState<'name' | 'date' | 'start' | null>(null)
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc')
+  const [selectedAssignee, setSelectedAssignee] = React.useState<string>("all")
+
+  // Extract unique assignees from all entries across schedules
+  const allAssignees = React.useMemo(() => {
+    const assignees = new Set<string>()
+    assignees.add("all") // Default option
+
+    migratedSchedules.forEach(schedule => {
+      if (schedule.entries) {
+        schedule.entries.forEach(entry => {
+          if (entry.assignee) {
+            assignees.add(entry.assignee)
+          }
+        })
+      } else {
+        // Legacy schedules
+        if (schedule.name) {
+          assignees.add(schedule.name)
+        }
+      }
+    })
+
+    return Array.from(assignees).sort()
+  }, [migratedSchedules])
+
+  // Filter schedules based on selected assignee (before sorting)
+  const filteredSchedules = React.useMemo(() => {
+    if (selectedAssignee === "all") {
+      return migratedSchedules
+    }
+
+    return migratedSchedules.filter(schedule => {
+      if (schedule.entries) {
+        // New format: check if any entry matches assignee
+        return schedule.entries.some(entry => entry.assignee === selectedAssignee)
+      } else {
+        // Legacy format: check if name matches assignee
+        return schedule.name === selectedAssignee
+      }
+    })
+  }, [migratedSchedules, selectedAssignee])
+
 
   const handleDelete = async (id: string) => {
     if (deletingId === id) return // Already deleting
@@ -52,9 +143,9 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
 
 
   const sortedSchedules = React.useMemo(() => {
-    if (!isSorted) return schedules
+    if (!isSorted) return filteredSchedules
 
-    return [...schedules].sort((a, b) => {
+    return [...filteredSchedules].sort((a, b) => {
       let aValue, bValue
 
       switch (isSorted) {
@@ -67,18 +158,20 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
           bValue = b.date || ''
           break
         case 'start':
-          aValue = a.start
-          bValue = b.start
+          // Use first entry time or legacy start time
+          aValue = a.entries?.[0]?.time || a.start || ''
+          bValue = b.entries?.[0]?.time || b.start || ''
           break
         default:
           return 0
       }
 
+      if (aValue == null || bValue == null) return 0
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
       return 0
     })
-  }, [schedules, isSorted, sortDirection])
+  }, [filteredSchedules, isSorted, sortDirection])
 
   const toggleSort = (column: 'name' | 'date' | 'start') => {
     if (isSorted === column) {
@@ -90,9 +183,9 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
   }
 
   const isSmallScreen = window.innerWidth < 768
-  console.log('🔍 ScheduleTable render debug - isSmallScreen:', isSmallScreen, 'schedules.length:', schedules.length, 'window.innerWidth:', window.innerWidth)
+  console.log('🔍 ScheduleTable render debug - isSmallScreen:', isSmallScreen, 'schedules.length:', safeSchedules.length, 'window.innerWidth:', window.innerWidth)
 
-  if (schedules.length === 0) {
+  if (safeSchedules.length === 0) {
     console.log('🔍 ScheduleTable: Rendering empty state')
     return (
       <Card>
@@ -115,23 +208,60 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
     )
   }
 
-  console.log('🔍 ScheduleTable: About to render table with', schedules.length, 'schedules, isSmallScreen:', isSmallScreen)
+  console.log('🔍 ScheduleTable: About to render table with', safeSchedules.length, 'schedules, isSmallScreen:', isSmallScreen)
   console.log('🔍 ScheduleTable: sortedSchedules:', sortedSchedules)
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">Current Schedules</CardTitle>
-            <Badge variant="secondary" className="ml-2">
-              {schedules.length}
-            </Badge>
+      <CardHeader className="pb-4">
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">Current Schedules</CardTitle>
+              <Badge variant="secondary" className="ml-2">
+                {allAssignees.length - 1} Assignees • {filteredSchedules.length} Schedules
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              <span>Last updated {new Date().toLocaleTimeString()}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span>Last updated {new Date().toLocaleTimeString()}</span>
+
+          {/* Assignee Filter Section */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
+              <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <label htmlFor="assignee-filter" className="text-sm font-medium text-muted-foreground">
+                Filter by Assignee
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
+                <SelectTrigger className="w-[180px]" id="assignee-filter">
+                  <SelectValue placeholder="Select assignee..." />
+                </SelectTrigger>
+                <SelectContent className="w-[180px] max-h-60 p-1">
+                  <SelectGroup>
+                    {allAssignees.map((assignee) => (
+                      <SelectItem
+                        key={assignee}
+                        value={assignee}
+                        className="flex items-center py-2.5 pl-8 pr-2 text-sm font-medium leading-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-accent/50 transition-colors"
+                      >
+                        {assignee === "all" ? "👥 All Assignees" : `👤 ${assignee}`}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              {selectedAssignee !== "all" && (
+                <Badge variant="outline" className="text-xs whitespace-nowrap">
+                  {selectedAssignee} ({filteredSchedules.length})
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -161,70 +291,103 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedSchedules.map((schedule) => {
-                  console.log('Rendering schedule:', schedule)
-                  return (
-                    <TableRow key={schedule.id} className="border-b last:border-b-0 hover:bg-accent/50">
-                      <Td className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <User className="h-4 w-4 text-primary" />
+                {filteredSchedules
+                  .filter((schedule: Schedule) => {
+                    console.log('🔍 Filtering schedule:', schedule.id, {
+                      hasEntries: !!schedule.entries?.length,
+                      hasLegacyFields: !!(schedule.start && schedule.end && schedule.tasks),
+                      entries: schedule.entries
+                    })
+                    
+                    // Show any schedule that has either entries or legacy fields
+                    const hasEntries = schedule.entries && schedule.entries.length > 0
+                    const hasLegacyFields = schedule.start && schedule.end // tasks is optional
+                    
+                    if (!hasEntries && !hasLegacyFields) {
+                      console.log('🔍 Filtering OUT schedule:', schedule.id, 'no valid data')
+                      return false
+                    }
+                    
+                    if (hasEntries) {
+                      // For new format, show if has any entries (relaxed validation)
+                      const validEntry = schedule.entries!.some(entry => entry.time)
+                      console.log('🔍 Filtering entry-based schedule:', schedule.id, 'valid:', validEntry)
+                      return validEntry
+                    }
+                    
+                    // Legacy format - basic validation
+                    console.log('🔍 Filtering legacy schedule:', schedule.id, 'valid times:', !!(schedule.start && schedule.end))
+                    if (!schedule.start || !schedule.end) return false
+                    const startTime = new Date(`2000-01-01T${schedule.start}:00`)
+                    const endTime = new Date(`2000-01-01T${schedule.end}:00`)
+                    const isValidTime = startTime < endTime
+                    console.log('🔍 Legacy time validation:', schedule.start, schedule.end, isValidTime)
+                    return isValidTime
+                  })
+                  .map((schedule: Schedule) => {
+                    console.log('Rendering schedule:', schedule)
+                    return (
+                      <TableRow key={schedule.id} className="border-b last:border-b-0 hover:bg-accent/50">
+                        <Td className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                              <User className="h-4 w-4 text-primary" />
+                            </div>
+                            <span>{schedule.name}</span>
                           </div>
-                          <span>{schedule.name}</span>
-                        </div>
-                      </Td>
-                      <Td>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{formatDate(schedule.date)}</span>
-                        </div>
-                      </Td>
-                      <Td className="text-center">
-                        <div className="text-sm">
-                          <div>{schedule.start}</div>
-                          <div className="text-xs text-muted-foreground font-mono">{schedule.end}</div>
-                        </div>
-                      </Td>
-                      <Td className="text-center">
-                        <Badge variant="outline" className="text-xs">
-                          {getDuration(schedule.start, schedule.end)}
-                        </Badge>
-                      </Td>
-                      <Td className="max-w-xs">
-                        <div className="text-sm line-clamp-2">
-                          {schedule.tasks || "No tasks specified"}
-                        </div>
-                      </Td>
-                      <Td className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onEdit(schedule)}
-                            className="h-8 w-8 p-0"
-                            title="Edit schedule"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(schedule.id)}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
-                            disabled={deletingId === schedule.id}
-                            title="Delete schedule"
-                          >
-                            {deletingId === schedule.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </Td>
-                    </TableRow>
-                  )
-                })}
+                        </Td>
+                        <Td>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{formatDate(schedule.date)}</span>
+                          </div>
+                        </Td>
+                        <Td className="text-center">
+                          <div className="text-sm">
+                            <div>{schedule.entries?.[0]?.time || schedule.start}</div>
+                            <div className="text-xs text-muted-foreground font-mono">{schedule.entries?.[0]?.time ? schedule.end : schedule.end}</div>
+                          </div>
+                        </Td>
+                        <Td className="text-center">
+                          <Badge variant="outline" className="text-xs">
+                            {schedule.start && schedule.end ? getDuration(schedule.start, schedule.end) : schedule.entries?.[0]?.duration || 'N/A'}
+                          </Badge>
+                        </Td>
+                        <Td className="max-w-xs">
+                          <div className="text-sm line-clamp-2">
+                            {schedule.tasks || schedule.entries?.[0]?.tasks || "No tasks specified"}
+                          </div>
+                        </Td>
+                        <Td className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onEdit(schedule)}
+                              className="h-8 w-8 p-0"
+                              title="Edit schedule"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(schedule.id)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
+                              disabled={deletingId === schedule.id}
+                              title="Delete schedule"
+                            >
+                              {deletingId === schedule.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </Td>
+                      </TableRow>
+                    )
+                  })}
               </TableBody>
             </Table>
           </div>
@@ -233,79 +396,110 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
         {/* Mobile Card View */}
         {isSmallScreen && (
           <div className="space-y-4">
-            {sortedSchedules.map((schedule) => (
-              <Card key={schedule.id} className="w-full">
-                <CardHeader className="flex flex-row items-start justify-between p-4 pb-2">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="font-medium text-foreground truncate">{schedule.name}</h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(schedule.date)}
+            {filteredSchedules
+              .filter((schedule: Schedule) => {
+                console.log('🔍 Mobile filtering schedule:', schedule.id)
+                
+                // Show any schedule that has either entries or legacy fields
+                const hasEntries = schedule.entries && schedule.entries.length > 0
+                const hasLegacyFields = schedule.start && schedule.end // tasks is optional
+                
+                if (!hasEntries && !hasLegacyFields) {
+                  console.log('🔍 Mobile filtering OUT schedule:', schedule.id, 'no valid data')
+                  return false
+                }
+                
+                if (hasEntries) {
+                  // For new format, show if has any entries (relaxed validation)
+                  const validEntry = schedule.entries!.some(entry => entry.time)
+                  console.log('🔍 Mobile filtering entry-based schedule:', schedule.id, 'valid:', validEntry)
+                  return validEntry
+                }
+                
+                // Legacy format - basic validation
+                console.log('🔍 Mobile filtering legacy schedule:', schedule.id, 'valid times:', !!(schedule.start && schedule.end))
+                if (!schedule.start || !schedule.end) return false
+                const startTime = new Date(`2000-01-01T${schedule.start}:00`)
+                const endTime = new Date(`2000-01-01T${schedule.end}:00`)
+                const isValidTime = startTime < endTime
+                console.log('🔍 Mobile legacy time validation:', schedule.start, schedule.end, isValidTime)
+                return isValidTime
+              })
+              .map((schedule: Schedule) => (
+                <Card key={schedule.id} className="w-full">
+                  <CardHeader className="flex flex-row items-start justify-between p-4 pb-2">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-medium text-foreground truncate">{schedule.name}</h3>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(schedule.date)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEdit(schedule)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(schedule.id)}
-                      className="h-8 w-8 p-0 text-destructive"
-                      disabled={deletingId === schedule.id}
-                    >
-                      {deletingId === schedule.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <div className="grid grid-cols-1 gap-3 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground flex items-center gap-2">
-                        <Clock className="h-3 w-3" />
-                        Time
-                      </span>
-                      <span className="font-medium">{schedule.start} - {schedule.end}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Duration</span>
-                      <Badge variant="outline" className="text-xs px-2 py-0.5">
-                        {getDuration(schedule.start, schedule.end)}
-                      </Badge>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-muted-foreground">Tasks</span>
-                      <div className="ml-2 space-y-1">
-                        {schedule.tasks ? (
-                          schedule.tasks.split(',').map((task, idx) => (
-                            <div key={idx} className="flex items-start gap-2 text-xs">
-                              <div className="w-1 h-1 rounded-full bg-foreground mt-1.5 flex-shrink-0"></div>
-                              <span>{task.trim()}</span>
-                            </div>
-                          ))
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(schedule)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(schedule.id)}
+                        className="h-8 w-8 p-0 text-destructive"
+                        disabled={deletingId === schedule.id}
+                      >
+                        {deletingId === schedule.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          <span className="text-xs text-muted-foreground italic">No tasks specified</span>
+                          <Trash2 className="h-4 w-4" />
                         )}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <div className="grid grid-cols-1 gap-3 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground flex items-center gap-2">
+                          <Clock className="h-3 w-3" />
+                          Time
+                        </span>
+                        <span className="font-medium">
+                          {schedule.entries?.[0]?.time || schedule.start} - {schedule.entries?.[0]?.time ? schedule.end : schedule.end}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Duration</span>
+                        <Badge variant="outline" className="text-xs px-2 py-0.5">
+                          {schedule.start && schedule.end ? getDuration(schedule.start, schedule.end) : schedule.entries?.[0]?.duration || 'N/A'}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-muted-foreground">Tasks</span>
+                        <div className="ml-2 space-y-1">
+                          {(schedule.tasks || schedule.entries?.[0]?.tasks) ? (
+                            String(schedule.tasks || schedule.entries?.[0]?.tasks).split(',').map((task: string, idx: number) => (
+                              <div key={idx} className="flex items-start gap-2 text-xs">
+                                <div className="w-1 h-1 rounded-full bg-foreground mt-1.5 flex-shrink-0"></div>
+                                <span>{task.trim()}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-xs text-muted-foreground italic">No tasks specified</span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))}
           </div>
         )}
       </CardContent>

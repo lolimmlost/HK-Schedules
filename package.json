@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.0.2",
+    "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.0.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
@@ -28,8 +29,8 @@
     "@vitejs/plugin-react": "^4.0.3",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.31",
-    "tailwindcss-animate": "^1.0.7",
     "tailwindcss": "^3.3.6",
+    "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.0.2",
     "vite": "^4.4.5"
   }

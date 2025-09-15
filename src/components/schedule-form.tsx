@@ -9,13 +9,23 @@ import { User, Calendar, Clock, List, Plus } from "lucide-react"
 
 import { getDuration } from "@/lib/utils"
 
+export interface Entry {
+  id: string
+  time: string
+  duration: string
+  tasks: string
+  assignee: string
+  status?: 'pending' | 'completed'
+}
+
 export interface Schedule {
   id: string
   name: string
   date?: string
-  start: string
-  end: string
-  tasks: string
+  start?: string
+  end?: string
+  entries?: Entry[]
+  tasks?: string // Legacy support
 }
 
 interface ScheduleFormProps {
@@ -154,9 +164,9 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
       </CardHeader>
       <CardContent className="space-y-6">
         {hasErrors && (
-          <Alert variant="destructive">
+          <Alert className="border-destructive bg-destructive/10">
             <List className="h-4 w-4" />
-            <AlertDescription>
+            <AlertDescription className="text-destructive">
               Please fix the errors below to continue.
             </AlertDescription>
           </Alert>

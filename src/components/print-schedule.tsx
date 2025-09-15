@@ -155,11 +155,11 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
                           </div>
                           <div className="text-xs text-muted-foreground print:hidden">
                             <Clock className="h-3 w-3 inline mr-1" />
-                            {getDuration(schedule.start, schedule.end)}
+                            {schedule.start && schedule.end ? getDuration(schedule.start, schedule.end) : 'N/A'}
                           </div>
                           <div className="print:hidden">
                             <Badge variant="outline" className="text-xs mt-1">
-                              {getDuration(schedule.start, schedule.end)}
+                              {schedule.start && schedule.end ? getDuration(schedule.start, schedule.end) : 'N/A'}
                             </Badge>
                           </div>
                         </div>
@@ -168,7 +168,7 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
                       {/* Duration */}
                       <td className="border border-gray-300 print:border-black p-4 text-center print:p-3">
                         <Badge variant="secondary" className="text-xs print:text-sm">
-                          {getDuration(schedule.start, schedule.end)}
+                          {schedule.start && schedule.end ? getDuration(schedule.start, schedule.end) : 'N/A'}
                         </Badge>
                       </td>
 
