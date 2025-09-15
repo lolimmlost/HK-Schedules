@@ -414,6 +414,6 @@ Although local-first, design with REST-like patterns for future backend:
 
 **Change Log Template**:
 - v1.0 (2025-09-14): Initial PRD.
-- v1.1: [Date] - Added [Changes].
+- v1.1 (2025-09-15): CSV Export Chrome Compatibility Fix - Resolved download issues with robust Blob-based implementation, proper CSV escaping using processRow function, cross-browser support including IE11 fallback, and defensive data format handling for legacy and multi-entry schedules.
 
 This PRD serves as a living document and will be updated based on feedback and iterations. Review quarterly or pre-sprint.

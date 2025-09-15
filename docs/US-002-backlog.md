@@ -75,3 +75,57 @@
 - Print view shows all schedules (no filtering applied)
 - Migration creates entries for schedules with valid start/end times
 - Empty tasks schedules are preserved but filtered from display until US-002 entry-level view is implemented
+## US-003: Housekeeping Schedule Management for Rick (New Use Case)
+
+### Overview
+Rick is the housekeeping and maintenance manager with low tech-savvy who prefers writing things down. He manages weekly cleaning schedules for over 130 units across 5+ housekeepers, with units split evenly and cleaned once per week at different predetermined times. The system should provide simple options: set housekeepers, enter predetermined schedules easily, pull individual schedules for printing, and edit quickly with dropdowns.
+
+### User Profile
+- **Role**: Housekeeping Manager
+- **Tech Savvy**: Low (minimal computer use, prefers paper)
+- **Needs**: Extremely simple interface, easy data entry for predetermined schedules, individual printable schedules per housekeeper, quick dropdown edits
+
+### Functional Requirements (High-Level)
+- **Housekeeper Management**: Simple list to add/remove housekeepers by name. Stored in localStorage.
+- **Schedule Entry**: Basic form to create weekly schedule: select week, add entries for each unit with dropdowns for housekeeper and time slot (predefined: Morning, Afternoon, Evening). Support manual entry for predetermined assignments.
+- **Individual Schedules**: View/print schedule filtered by housekeeper, showing their units and times for the week.
+- **Quick Edits**: In individual or main view, use dropdowns to reassign housekeeper, change time slot, or mark status (Pending/Completed). Auto-save changes.
+- **Printing**: Generate clean, printable individual schedules with unit list, times, and checkboxes for completion tracking.
+
+### UI/UX Guidelines
+- **Simplicity First**: Minimal steps, large buttons and dropdowns, no complex wizards. Use guided prompts like "Select Housekeeper" then "Add Unit".
+- **Dropdown-Heavy**: All assignments and edits via simple dropdowns (housekeeper names, time slots).
+- **Print-Friendly**: Simple tables for individual schedules, A4-optimized, with large text and checkboxes; one-click print button.
+- **Low-Tech Aids**: High-contrast colors, ARIA labels for screen readers, short tooltips/help text, avoid modals—use inline editing.
+
+### Acceptance Criteria
+- As Rick, I want to set up housekeepers simply so I can start scheduling quickly.
+  - AC: Add/edit housekeepers with name input and save button; list shows all; persists on reload.
+- As Rick, I want to enter predetermined schedules easily so I don't have to retype from paper.
+  - AC: Form with dropdowns for unit, housekeeper, time; add multiple entries; save creates schedule for week; handles 130+ units without lag.
+- As Rick, I want individual printable schedules so I can distribute to housekeepers weekly.
+  - AC: Select housekeeper → View table with units/times → Print button creates PDF; clean layout, includes week date and checkboxes.
+- As Rick, I want quick dropdown edits so I can adjust without hassle.
+  - AC: Click entry → Dropdowns for changes → Auto-save with confirmation; <3 clicks per edit; undo via back button or toast.
+- Performance: Load/edit 130-unit schedule <2s; print preview instant.
+- Usability: Low-tech user completes setup/print in <5 min first time; error rate <5%.
+
+### Testing Considerations (QA Focus)
+- **Usability Tests**: Test with low-tech personas (e.g., 50+ age group); measure task time, frustration points, SUS score >75.
+- **Performance Tests**: Verify handling of 130+ entries; edit/print speed on mid-range devices.
+- **Edge Cases**: 5+ housekeepers, uneven unit counts, duplicate units, empty schedules, mobile printing, accessibility (WCAG AA compliance).
+- **Integration**: Works with US-002 filtering (housekeepers as assignees); no conflicts with existing schedule data.
+
+### Dependencies
+- shadcn/ui Select and Button for dropdowns/edits.
+- Existing print-schedule.tsx for enhanced printing.
+- Schedule form and table components.
+
+### Risks
+- Interface too simple, missing flexibility for other users (mitigate with optional advanced mode).
+- Entry speed for 130 units (mitigate with batch add if needed later).
+- Print consistency across browsers/devices.
+- Low adoption if not intuitive enough (mitigate with user testing).
+
+### Priority
+High - Targets practical housekeeping workflow, improves app versatility for non-office scheduling.

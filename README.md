@@ -319,9 +319,12 @@ John Doe,2025-09-15,09:00,12:00,"Clean kitchen, vacuum living room, dust surface
 - Preserves existing schedules
 
 **CSV Export:**
-- Downloads formatted CSV with proper escaping
-- Includes all schedule data
-- Compatible with spreadsheet applications
+- Downloads formatted CSV with proper escaping and quote handling
+- Includes all schedule data (Housekeeper, Assignee, Date, Start Time, Duration, Tasks)
+- Fully compatible with Chrome (fixed compatibility issues with Blob-based downloads and CSV escaping)
+- Cross-browser support (Chrome, Firefox, Safari, Edge)
+- Handles special characters, commas, and quotes in task descriptions
+- UTF-8 BOM included for Excel compatibility
 
 ### Print View
 
@@ -454,7 +457,12 @@ MIT License - see LICENSE file for details.
 
 ## 📞 Support
 
-For setup issues, deployment problems, or feature requests:
+For setup issues, deployment problems, or feature requests (CSV export now fully functional in Chrome):
+
+Recent Fixes:
+- ✅ **CSV Export Chrome Compatibility**: Resolved download issues with robust Blob-based implementation and proper CSV escaping
+- ✅ **Data Format Handling**: Fixed export with legacy and multi-entry schedule formats
+- ✅ **Defensive Programming**: Added array validation to prevent runtime errors
 
 1. Check the [Troubleshooting](#troubleshooting) section
 2. Review the [Cloudflare Tunnel Setup](#cloudflare-tunnel-setup)

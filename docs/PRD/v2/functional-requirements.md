@@ -60,6 +60,32 @@
 
 **Cross-reference**: Extends [v1/functional-requirements.md](../v1/functional-requirements.md#printing-and-export) export capabilities.
 
+
+### 3.1.5 Housekeeping Schedule Management (FR-5, US-003)
+
+- Extend existing components for low-tech-savvy housekeeping managers: Simple housekeeper list management (`src/components/HousekeeperList.tsx`), basic schedule entry form with dropdowns, individual printable views.
+- **Housekeeper Setup**: Add/remove housekeepers via simple form; store as global config in localStorage; integrate with assignee system.
+- **Schedule Creation**: Extend `schedule-form.tsx` with simplified mode for housekeeping: Dropdowns for unit ID, housekeeper, time slot (Morning/Afternoon/Evening); manual entry support for predetermined assignments; no complex multi-select.
+- **Individual Views**: New filter in dashboard/table for "Housekeeper Schedule" view; shows only entries for selected housekeeper; one-click print with checkboxes.
+- **Edits & Validation**: Inline dropdown edits in table; auto-save; basic validation (no duplicate units, required fields); alert for conflicts.
+- **Printing Enhancements**: Extend `print-schedule.tsx` for individual housekeeper PDFs: Simple table layout, large text, week header, unit/time/status columns, checkboxes; A4 optimized.
+
+**User Stories & Acceptance Criteria** (US-003):
+- As Rick (Housekeeping Manager), I want to set up my housekeepers simply so I can start scheduling without technical hurdles.
+  - AC: Add housekeeper (name only) <10s; list persists; integrates with schedule forms as dropdown options.
+- As Rick, I want to enter my predetermined weekly schedules easily so I can transfer from paper quickly.
+  - AC: Form loads with dropdowns for unit/housekeeper/time; add entry <15s; supports 130+ units; saves as schedule with housekeeping category.
+- As Rick, I want to view and print individual housekeeper schedules so I can distribute weekly assignments.
+  - AC: Filter by housekeeper → Table shows only their entries → Print generates clean PDF <2s; includes checkboxes, week dates; mobile-friendly.
+- As Rick, I want to make quick edits with dropdowns so I can adjust assignments without retyping.
+  - AC: Click entry row → Inline dropdowns appear → Change and auto-save; confirmation toast; undo via browser back or button; <3 clicks per edit.
+
+**Cross-reference**: Builds on FR-2 (filtering), FR-3 (assignees), FR-4 (printing); ensures compatibility with existing multi-schedule dashboard.
+
+**Non-Functional Additions**:
+- **Simplicity**: All interactions <3 steps; large touch targets (48x48px); guided onboarding for first housekeeping use.
+- **Performance**: Handle 130+ entries without lag; print generation <3s on mid-range devices.
+- **Accessibility**: WCAG 2.1 AA for dropdowns/forms; high-contrast print option; screen reader announces changes.
 ## 3.2 User Flows
 
 1. **Multi-Schedule Onboarding**: App load → Dashboard (list or empty state) → Create (form) → Save → Back to dashboard with new card.

@@ -17,7 +17,20 @@ export default defineConfig({
       '/export-csv': {
         target: 'http://localhost:4000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/export-csv/, '/export-csv')
+        rewrite: (path) => path.replace(/^\/export-csv/, '/export-csv'),
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('Vite proxy error for /export-csv:', err)
+          })
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('Vite proxying /export-csv request:', req.method, req.url)
+            console.log('Request headers:', Object.fromEntries(Object.entries(req.headers)))
+          })
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('Vite proxy response for /export-csv:', proxyRes.statusCode, req.method)
+            console.log('Response headers:', Object.fromEntries(Object.entries(proxyRes.headers)))
+          })
+        }
       }
     },
     allowedHosts: [

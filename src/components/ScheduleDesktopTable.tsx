@@ -80,7 +80,7 @@ export function ScheduleDesktopTable({
             const totalDuration = scheduleEntries.reduce((sum, entry) => sum + parseFloat(entry.duration || '0'), 0)
             
             return (
-              <>
+              <React.Fragment key={schedule.id}>
                 {/* Schedule Header Row */}
                 <TableRow key={`${schedule.id}-header`} className="bg-accent/20 hover:bg-accent/30">
                   <Td className="w-12">
@@ -195,7 +195,7 @@ export function ScheduleDesktopTable({
                     <Td />
                   </TableRow>
                 ))}
-              </>
+              </React.Fragment>
             )
           })}
         </TableBody>
