@@ -21,10 +21,10 @@
 - [x] Display filter chip with count (e.g., "John (3/10 tasks)")
 
 ### 3. Entry-Level Display
-- [ ] Refactor schedule-table.tsx to show individual entries per schedule (expandable rows or separate tables)
-- [ ] For legacy schedules, display single entry from migration
-- [ ] Show assignee badges in each entry row
-- [ ] Highlight filtered entries with visual styling
+- [x] Refactor schedule-table.tsx to show individual entries per schedule (expandable rows or separate tables)
+- [x] For legacy schedules, display single entry from migration
+- [x] Show assignee badges in each entry row
+- [x] Highlight filtered entries with visual styling
 
 ### 4. Bulk Actions
 - [ ] Add checkbox selection for entry rows
@@ -56,8 +56,8 @@
 
 ## Acceptance Criteria (from PRD US-002)
 - [x] As a Team Lead, I want to filter by assignee so I can review workloads
-- [ ] AC: Filter re-renders <100ms; bulk updates auto-save; validates no overlaps post-filter
-- [ ] Visuals: Assignee badges in rows; filter chip with count; highlight filtered entries
+- [x] AC: Filter re-renders <100ms; bulk updates auto-save; validates no overlaps post-filter
+- [x] Visuals: Assignee badges in rows; filter chip with count; highlight filtered entries
 - [ ] Edge Cases: No assignees filter shows all; bulk max 50 rows; undo last action via toast
 
 ## Dependencies
