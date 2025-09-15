@@ -9,9 +9,10 @@ interface PrintScheduleProps {
   schedules: Schedule[]
   companyName?: string
   printedAt?: Date
+  className?: string
 }
 
-export function PrintSchedule({ schedules, companyName = "Housekeeper Services", printedAt = new Date() }: PrintScheduleProps) {
+export function PrintSchedule({ schedules, companyName = "Housekeeper Services", printedAt = new Date(), className }: PrintScheduleProps) {
   // Defensive check for schedules - ensure it's always an array to prevent reduce errors
   let safeSchedules: Schedule[] = []
   if (Array.isArray(schedules)) {
@@ -21,6 +22,8 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
   } else {
     safeSchedules = []
   }
+
+  const rootClassName = `max-w-4xl mx-auto p-8 print:p-0 print:bg-white print:pt-4 ${className || ''}`
 
 
   const totalDuration = safeSchedules.reduce((total, schedule) => {
@@ -35,7 +38,7 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
 
   if (safeSchedules.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto p-8 print:p-0 print:bg-white">
+      <div className={`max-w-4xl mx-auto p-8 print:p-0 print:bg-white ${className || ''}`}>
         <div className="text-center py-12">
           <User className="h-16 w-16 text-gray-300 mx-auto mb-4 print:hidden" />
           <h1 className="text-2xl font-bold text-gray-500 mb-2">No Schedules to Print</h1>
@@ -46,7 +49,7 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-8 print:p-0 print:bg-white print:pt-4">
+    <div className={rootClassName}>
       {/* Header */}
       <div className="text-center mb-8 print:mb-6 print:pb-4">
         <h1 className="text-3xl font-bold text-foreground mb-2 print:text-4xl print:mb-4">
@@ -299,6 +302,16 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
               page-break-after: avoid;
               page-break-inside: avoid;
               margin-bottom: 0.5em;
+            }
+            
+            .no-print {
+              display: none !important;
+            }
+            
+            @media print {
+              .no-print {
+                display: block !important;
+              }
             }
             
             .print-hidden {
