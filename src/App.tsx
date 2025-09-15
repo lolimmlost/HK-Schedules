@@ -320,13 +320,12 @@ function App() {
         </div>
       
         {/* Print Schedule - Always rendered but hidden on screen */}
-        <div className="no-print">
-          <PrintSchedule
-            schedules={schedules}
-            companyName="Housekeeper Services"
-            printedAt={new Date()}
-          />
-        </div>
+        <PrintSchedule
+          className="hidden print:block"
+          schedules={schedules}
+          companyName="Housekeeper Services"
+          printedAt={new Date()}
+        />
       </div>
     </div>
   )
