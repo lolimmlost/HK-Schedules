@@ -25,7 +25,6 @@ function App() {
   // Form state
   const [editingSchedule, setEditingSchedule] = React.useState<Schedule | null>(null)
   const [showForm, setShowForm] = React.useState(false)
-  const [isPrinting, setIsPrinting] = React.useState(false)
 
   // CSV export hook
   const exportCSV = useCSVExport()
@@ -265,12 +264,7 @@ function App() {
   }
 
   const handlePrint = () => {
-    setIsPrinting(true)
-    // Small delay to ensure print styles are applied
-    setTimeout(() => {
-      window.print()
-      setIsPrinting(false)
-    }, 100)
+    window.print()
   }
 
   const handleAddClick = () => {
@@ -307,7 +301,6 @@ function App() {
                 onAddSchedule={handleAddClick}
                 onPrint={handlePrint}
                 onExport={handleExport}
-                isPrinting={isPrinting}
                 scheduleCount={schedules.length}
               />
             </CardContent>
@@ -318,24 +311,22 @@ function App() {
         <ImportSection onImport={handleImport} />
 
         {/* Schedule Table - Screen View */}
-        {!isPrinting && (
-          <div className="no-print">
-            <ScheduleTable
-              schedules={schedules}
-              onEdit={handleEditSchedule}
-              onDelete={handleDeleteSchedule}
-            />
-          </div>
-        )}
-
-        {/* Print Schedule - Print View */}
-        {isPrinting && (
-          <PrintSchedule 
-            schedules={schedules} 
+        <div className="no-print">
+          <ScheduleTable
+            schedules={schedules}
+            onEdit={handleEditSchedule}
+            onDelete={handleDeleteSchedule}
+          />
+        </div>
+      
+        {/* Print Schedule - Always rendered but hidden on screen */}
+        <div className="no-print">
+          <PrintSchedule
+            schedules={schedules}
             companyName="Housekeeper Services"
             printedAt={new Date()}
           />
-        )}
+        </div>
       </div>
     </div>
   )

@@ -12,9 +12,18 @@ interface PrintScheduleProps {
 }
 
 export function PrintSchedule({ schedules, companyName = "Housekeeper Services", printedAt = new Date() }: PrintScheduleProps) {
+  // Defensive check for schedules - ensure it's always an array to prevent reduce errors
+  let safeSchedules: Schedule[] = []
+  if (Array.isArray(schedules)) {
+    safeSchedules = schedules
+  } else if (schedules && typeof schedules === 'object' && 'schedules' in schedules && Array.isArray((schedules as any).schedules)) {
+    safeSchedules = (schedules as any).schedules
+  } else {
+    safeSchedules = []
+  }
 
 
-  const totalDuration = schedules.reduce((total, schedule) => {
+  const totalDuration = safeSchedules.reduce((total, schedule) => {
     const startTime = new Date(`2000-01-01T${schedule.start}:00`)
     const endTime = new Date(`2000-01-01T${schedule.end}:00`)
     const diff = endTime.getTime() - startTime.getTime()
@@ -24,7 +33,7 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
   const totalHours = Math.floor(totalDuration / (1000 * 60 * 60))
   const totalMinutes = Math.floor((totalDuration % (1000 * 60 * 60)) / (1000 * 60))
 
-  if (schedules.length === 0) {
+  if (safeSchedules.length === 0) {
     return (
       <div className="max-w-4xl mx-auto p-8 print:p-0 print:bg-white">
         <div className="text-center py-12">
@@ -66,7 +75,7 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
             </div>
             <div className="md:col-span-2">
               <div className="font-medium">Total Schedules:</div>
-              <div className="text-lg font-semibold">{schedules.length}</div>
+              <div className="text-lg font-semibold">{safeSchedules.length}</div>
             </div>
             {totalHours > 0 && (
               <div className="md:col-span-2">
@@ -117,9 +126,9 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
                   </tr>
                 </thead>
                 <tbody>
-                  {schedules.map((schedule, index) => (
-                    <tr 
-                      key={schedule.id} 
+                  {safeSchedules.map((schedule, index) => (
+                    <tr
+                      key={schedule.id}
                       className={`border-b print:border-b print:border-black ${index % 2 === 0 ? 'bg-background' : 'bg-muted/50 print:bg-gray-50'}`}
                     >
                       {/* Housekeeper */}
@@ -198,13 +207,13 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
         </Card>
 
         {/* Summary Footer */}
-        {schedules.length > 0 && (
+        {safeSchedules.length > 0 && (
           <div className="mt-8 pt-6 border-t print:mt-6 print:pt-4 print:border-t print:border-black">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:flex-row print:items-center print:justify-between print:gap-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground print:text-base print:gap-4">
                 <div className="flex items-center gap-2 print:gap-1">
                   <Clock className="h-4 w-4 print:h-3 print:w-3" />
-                  <span>Total schedules: <span className="font-medium">{schedules.length}</span></span>
+                  <span>Total schedules: <span className="font-medium">{safeSchedules.length}</span></span>
                 </div>
                 {totalHours > 0 && (
                   <div className="flex items-center gap-2 print:gap-1">
@@ -218,12 +227,12 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
                   Prepared by: Housekeeper Schedule Manager
                 </p>
                 <p className="text-xs text-muted-foreground print:text-sm">
-                  Printed: {printedAt.toLocaleString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric', 
-                    year: 'numeric', 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
+                  Printed: {printedAt.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
                   })}
                 </p>
               </div>
