@@ -28,7 +28,7 @@ export function ImportSection({ onImport }: ImportSectionProps) {
             />
           </div>
           <div className="text-sm text-muted-foreground">
-            Import schedules from CSV file (format: Name,Date,Start,End,Tasks...)
+            Import v1/v2 CSV schedules (v1: Name/Date/Start/End/Tasks; v2: Housekeeper/Assignee/Date/Start/Duration/Tasks)
           </div>
         </div>
       </CardContent>

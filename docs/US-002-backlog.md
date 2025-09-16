@@ -171,3 +171,62 @@ High - Targets practical housekeeping workflow, improves app versatility for non
 - ✅ Usability testing (SUS 82, <10min workflow)
 
 **Next**: Integrate with brownfield epic; demo to stakeholders.
+
+## US-004: Backward Compatibility for Legacy CSV Imports
+
+### Overview
+After the v2 update, importing CSV files exported from v1 results in "0 schedules imported successfully" with no errors. This silent failure occurs because the import parser expects the new format (Housekeeper, Assignee, Date, Start Time, Duration (h), Tasks) but old CSVs use a flat v1 structure (likely Name, Date, Start, End, Tasks without duration column or assignee). Users with existing v1 exports cannot migrate data easily, impacting adoption and data continuity.
+
+### User Profile
+- **Role**: Existing v1 users (e.g., housekeeping managers) upgrading to v2
+- **Pain Point**: Cannot import historical schedules; forced to manual re-entry
+- **Needs**: Seamless backward compatibility; clear feedback on import success/failures; migration guidance
+
+### Functional Requirements
+- Detect legacy CSV format via header analysis (e.g., columns include "End" but no "Duration", or fewer than 6 columns)
+- Parse old format: Map Name to Housekeeper/Assignee, calculate duration from Start/End times, join tasks
+- Convert parsed data to v2 Schedule structure (with entries array, category='housekeeping', version='2.0')
+- Provide detailed feedback: "X legacy schedules imported, Y failed (reasons)" instead of generic alert
+- Log parsing details/errors to console for debugging
+- Update ImportSection help text: "Supports v1 and v2 CSV formats"
+
+### Acceptance Criteria
+- As a v1 user, I want to import old CSV files so my historical schedules load correctly in v2
+  - AC: Parses 5-column v1 format (Name,Date,Start,End,Tasks); calculates duration (e.g., 09:00-10:00 → 60m); creates v2 schedule with single entry; imports ≥95% of valid rows
+  - AC: Handles header variations (case-insensitive); skips invalid rows silently but logs warnings; alert shows "5/7 legacy schedules imported"
+- As a user, I want clear import feedback so I know what succeeded/failed
+  - AC: Toast/alert with counts and reasons (e.g., "Skipped 2 rows: invalid time"); no crashes; supports files up to 1000 rows
+- Performance: Import 100-row CSV <2s; no UI blocking
+- Compatibility: Works with current export (v2 format unchanged); tested on Chrome/Firefox/Safari
+- Edge Cases: Empty file, malformed rows, missing columns, overnight shifts (End < Start), duplicate entries
+
+### Testing Considerations
+- **Unit Tests**: Test parser with sample v1/v2 CSVs; edge cases (invalid dates, zero duration, empty tasks)
+- **Integration Tests**: Full import → store update → display verification; migration to v2 structure
+- **Manual Tests**: Import real v1 export; verify data integrity (times, durations, assignees); cross-browser
+- **Regression**: Ensure v2 imports unchanged; no impact on export or other features
+
+### Dependencies
+- Existing handleImport in App.tsx (enhance parsing logic)
+- useScheduleStore.ts (leverage existing v1→v2 migration)
+- shadcn/ui Toast for better feedback (if not installed)
+
+### Risks
+- Complex header detection leading to false positives/negatives (mitigate with flexible regex + fallback)
+- Duration calculation errors for unusual times (mitigate with validation + defaults)
+- Large file performance (mitigate with streaming if needed, but FileReader sufficient for <1MB CSVs)
+- User confusion on formats (mitigate with updated docs/help text)
+
+### Priority
+High - Critical bug fix; blocks data migration for existing users; ties to v1→v2 upgrade path in [Migration Guide](docs/migration-guide-v1-to-v2.md)
+
+### Implementation Notes
+- Enhance handleImport: Add format detection (e.g., if headers include "End" and no "Duration", treat as v1)
+- For v1: duration = parseInt(getDuration(start, end)); assignee = name; tasks from last column
+- Fallback: If parsing fails, suggest manual entry or contact support
+- Update line 31 in ImportSection.tsx: "Import v1/v2 CSV schedules (Name/Date/Start/End/Tasks or Housekeeper/Assignee/Date/Start/Duration/Tasks)"
+
+### Status (2025-09-16)
+- [ ] Backlog created
+- [ ] Story refinement with dev team
+- [ ] Implementation sprint assignment

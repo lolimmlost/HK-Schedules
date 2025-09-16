@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { getDuration } from './utils'
 import type { Schedule, Entry } from '@/components/schedule-form'
 
-interface ScheduleState {
+export interface ScheduleState {
   schedules: Schedule[]
   housekeepers: string[]
   addSchedule: (schedule: Schedule) => void
@@ -83,61 +83,61 @@ export function migrateV1ToV2(legacySchedules: any[]): Schedule[] {
   })
 }
 
-export const useScheduleStore = create(
+export const useScheduleStore = create<ScheduleState>()(
   persist(
     (set, get) => ({
       schedules: [],
       housekeepers: [],
-      addSchedule: (schedule) => {
+      addSchedule: (schedule: Schedule) => {
         console.log('🔍 Store - addSchedule called with:', schedule)
         if (!validateScheduleEntries(schedule)) {
           console.error('Validation failed: Invalid schedule add')
           throw new Error('Invalid schedule data')
         }
-        set((state) => ({ schedules: [...state.schedules, schedule] }))
+        set((state: ScheduleState) => ({ schedules: [...state.schedules, schedule] }))
         console.log('🔍 Store - schedule added successfully')
       },
-      updateSchedule: (updatedSchedule) => {
+      updateSchedule: (updatedSchedule: Schedule) => {
         console.log('🔍 Store - updateSchedule called with:', updatedSchedule)
         if (!validateScheduleEntries(updatedSchedule)) {
           console.error('Validation failed: Invalid schedule update')
           return
         }
-        set((state) => ({
-          schedules: state.schedules.map(s => s.id === updatedSchedule.id ? updatedSchedule : s)
+        set((state: ScheduleState) => ({
+          schedules: state.schedules.map((s: Schedule) => s.id === updatedSchedule.id ? updatedSchedule : s)
         }))
       },
-      deleteSchedule: (id) => set((state) => ({
-        schedules: state.schedules.filter(s => s.id !== id)
+      deleteSchedule: (id: string) => set((state: ScheduleState) => ({
+        schedules: state.schedules.filter((s: Schedule) => s.id !== id)
       })),
-      getSchedule: (id) => {
-        const state = get()
-        return state.schedules.find(s => s.id === id)
+      getSchedule: (id: string) => {
+        const state = get() as ScheduleState
+        return state.schedules.find((s: Schedule) => s.id === id)
       },
       getSchedules: () => {
-        const state = get()
+        const state = get() as ScheduleState
         return [...state.schedules]
       },
-      setSchedules: (schedules) => set({ schedules }),
-      addHousekeeper: (name) => {
-        const state = get()
+      setSchedules: (schedules: Schedule[]) => set({ schedules }),
+      addHousekeeper: (name: string) => {
+        const state = get() as ScheduleState
         if (name.trim() && !state.housekeepers.includes(name.trim())) {
-          set((state) => ({ housekeepers: [...state.housekeepers, name.trim()] }))
+          set((state: ScheduleState) => ({ housekeepers: [...state.housekeepers, name.trim()] }))
         }
       },
-      removeHousekeeper: (name) => set((state) => ({
-        housekeepers: state.housekeepers.filter(h => h !== name)
+      removeHousekeeper: (name: string) => set((state: ScheduleState) => ({
+        housekeepers: state.housekeepers.filter((h: string) => h !== name)
       })),
-      setHousekeepers: (names) => set({ housekeepers: names }),
+      setHousekeepers: (names: string[]) => set({ housekeepers: names }),
       getHousekeepers: () => {
-        const state = get()
+        const state = get() as ScheduleState
         return [...state.housekeepers]
       }
     }),
     {
       name: 'schedule-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ schedules: state.schedules, housekeepers: state.housekeepers }),
+      partialize: (state: ScheduleState) => ({ schedules: state.schedules, housekeepers: state.housekeepers }),
       migrate: (persistedState, version) => {
         if (version === 0) {
           const state = persistedState as any

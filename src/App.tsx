@@ -10,6 +10,7 @@ import { ChevronLeft } from "lucide-react"
 import { v4 as uuidv4 } from "uuid"
 import { getDuration } from "@/lib/utils"
 import { useScheduleStore } from "@/lib/useScheduleStore"
+import type { ScheduleState } from "@/lib/useScheduleStore"
 import { useCSVExport } from "@/lib/useCSVExport"
 import { AppHeader } from "@/components/AppHeader"
 import { ActionBar } from "@/components/ActionBar"
@@ -26,7 +27,7 @@ function App() {
     updateSchedule,
     deleteSchedule,
     //getSchedules
-  } = useScheduleStore()
+  } = useScheduleStore() as ScheduleState
 
   // Form state
   const [editingSchedule, setEditingSchedule] = React.useState<Schedule | null>(null)
@@ -47,16 +48,33 @@ function App() {
       const text = e.target?.result as string
       const lines = text.trim().split('\n')
       let importedCount = 0
+      let skippedCount = 0
+      let isLegacyFormat = false
 
-      // Skip header row if present
+      // Detect format and skip header row if present
       let startIndex = 0
       if (lines.length > 0) {
         const firstLineParts = lines[0].split(',').map(part => part.trim().replace(/"/g, ''))
-        if (firstLineParts.length >= 6 &&
+        const hasEndColumn = firstLineParts.some(p => p.toLowerCase().includes('end'))
+        const hasDurationColumn = firstLineParts.some(p => p.toLowerCase().includes('duration'))
+        const colCount = firstLineParts.length
+
+        // Legacy v1: Has "End" but no "Duration", typically 5 columns
+        if (hasEndColumn && !hasDurationColumn && colCount >= 4 && colCount <= 6) {
+          isLegacyFormat = true
+          console.log('🔍 App - Detected legacy v1 CSV format')
+          startIndex = 1 // Skip header
+        }
+        // v2: Has "Duration", >=6 columns, specific headers
+        else if (colCount >= 6 &&
             firstLineParts[0].toLowerCase() === 'housekeeper' &&
             firstLineParts[2].toLowerCase() === 'date' &&
-            firstLineParts[3].toLowerCase().includes('start')) {
+            firstLineParts[3].toLowerCase().includes('start') &&
+            hasDurationColumn) {
           startIndex = 1
+          console.log('🔍 App - Detected v2 CSV format')
+        } else {
+          console.warn('🔍 App - Unknown CSV format, treating as data from line 0')
         }
       }
 
@@ -65,13 +83,73 @@ function App() {
         if (!line) continue
 
         const parts = line.split(',').map(part => part.trim().replace(/"/g, ''))
-        if (parts.length >= 6) {
-          const housekeeper = parts[0]
-          const assignee = parts[1] || housekeeper
-          const date = parts[2]
-          const startTime = parts[3]
-          const durationStr = parts[4]
-          const tasks = parts.slice(5).join(', ')
+        if (parts.length < 4) {
+          console.warn(`🔍 App - Skipping row ${i}: too few columns (${parts.length})`)
+          skippedCount++
+          continue
+        }
+
+        let housekeeper, assignee, date, startTime, endTime, durationStr, tasks
+
+        if (isLegacyFormat) {
+          // v1 format: Name, Date, Start, End, Tasks (5 cols)
+          housekeeper = parts[0]
+          assignee = housekeeper // No separate assignee in v1
+          date = parts[1]
+          startTime = parts[2]
+          endTime = parts[3]
+          tasks = parts.slice(4).join(', ')
+          
+          if (!housekeeper || !startTime || !endTime || housekeeper.toLowerCase().includes('name')) {
+            console.warn(`🔍 App - Skipping legacy row ${i}: invalid data`, {housekeeper, startTime, endTime})
+            skippedCount++
+            continue
+          }
+
+          try {
+            // Calculate duration from start/end using existing utility
+            const durationText = getDuration(startTime, endTime)
+            const durationMinutes = parseInt(durationText.replace(/[^0-9]/g, '')) || 60 // Fallback 60m
+            console.log(`🔍 App - Legacy duration calc: ${startTime}-${endTime} → ${durationMinutes}m`)
+
+            // Convert to v2 structure
+            const newSchedule: Schedule = {
+              id: Date.now().toString() + importedCount++,
+              title: assignee,
+              category: 'housekeeping' as const,
+              description: tasks || 'Imported legacy schedule',
+              date: date.trim(),
+              entries: [{
+                id: uuidv4(),
+                time: startTime,
+                duration: durationMinutes,
+                task: tasks || 'General housekeeping',
+                assignee,
+                status: 'pending' as const,
+                recurrence: 'none' as const
+              }],
+              version: '2.0',
+              recurrence: 'none' as const
+            }
+            
+            addSchedule(newSchedule)
+            console.log('🔍 App - imported legacy schedule:', newSchedule.title, 'Duration:', durationMinutes + 'm')
+          } catch (error) {
+            console.warn('🔍 App - failed to import legacy schedule:', housekeeper, error)
+            skippedCount++
+          }
+        } else {
+          // v2 format: Housekeeper, Assignee, Date, Start, Duration, Tasks (>=6 cols)
+          if (parts.length < 6) {
+            skippedCount++
+            continue
+          }
+          housekeeper = parts[0]
+          assignee = parts[1] || housekeeper
+          date = parts[2]
+          startTime = parts[3]
+          durationStr = parts[4]
+          tasks = parts.slice(5).join(', ')
 
           if (housekeeper && startTime && !housekeeper.toLowerCase().includes('housekeeper')) {
             try {
@@ -84,14 +162,7 @@ function App() {
                 }
               }
 
-              // Calculate end time from start time + duration
-              const [startHour, startMin] = startTime.split(':').map(Number)
-              const totalStartMinutes = startHour * 60 + startMin
               const durationMinutes = durationHours * 60
-              const endMinutes = totalStartMinutes + durationMinutes
-              const endHour = Math.floor(endMinutes / 60) % 24
-              const endMin = endMinutes % 60
-              const endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`
 
               // Convert to v2 structure
               const newSchedule: Schedule = {
@@ -114,16 +185,23 @@ function App() {
               }
               
               addSchedule(newSchedule)
-              console.log('🔍 App - imported schedule:', newSchedule.title, 'Duration:', durationMinutes + 'm')
+              console.log('🔍 App - imported v2 schedule:', newSchedule.title, 'Duration:', durationMinutes + 'm')
             } catch (error) {
-              console.warn('🔍 App - failed to import schedule:', housekeeper, error)
+              console.warn('🔍 App - failed to import v2 schedule:', housekeeper, error)
+              skippedCount++
             }
+          } else {
+            skippedCount++
           }
         }
       }
 
       event.target.value = ''
-      alert(`${importedCount} schedules imported successfully.`)
+      const message = isLegacyFormat
+        ? `${importedCount} legacy schedules imported successfully. ${skippedCount > 0 ? `${skippedCount} rows skipped (invalid data).` : ''}`
+        : `${importedCount} schedules imported successfully.${skippedCount > 0 ? ` ${skippedCount} rows skipped.` : ''}`
+      alert(message)
+      console.log(`🔍 App - Import complete: ${importedCount} imported, ${skippedCount} skipped`)
     }
     reader.readAsText(file)
   }
