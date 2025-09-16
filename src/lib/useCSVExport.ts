@@ -82,7 +82,7 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
       console.log('🔍 useCSVExport - First schedule (index 0):', schedules[0])
       if (schedules.length > 0) {
         console.log('🔍 useCSVExport - Schedule 0 keys:', Object.keys(schedules[0]))
-        console.log('🔍 useCSVExport - Schedule 0 name:', schedules[0].name, 'type:', typeof schedules[0].name)
+        console.log('🔍 useCSVExport - Schedule 0 title:', schedules[0].title, 'type:', typeof schedules[0].title)
       }
       
       /**
@@ -193,9 +193,9 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
          */
         console.log(`🔍 useCSVExport - Processing schedule ${index}:`, {
           id: schedule?.id,
-          name: schedule?.name,
-          hasName: !!schedule?.name && typeof schedule?.name === 'string',
-          nameTrimmed: schedule?.name?.trim(),
+          title: schedule?.title,
+          hasTitle: !!schedule?.title && typeof schedule?.title === 'string',
+          titleTrimmed: schedule?.title?.trim(),
           date: schedule?.date,
           start: schedule?.start,
           hasEntries: !!schedule?.entries,
@@ -208,20 +208,20 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
           return
         }
         
-        // Validate name field - required for all formats
-        if (!schedule.name || typeof schedule.name !== 'string') {
-          console.warn(`🔍 useCSVExport - Skipping invalid schedule at index ${index}: name is missing or invalid`, {
-            name: schedule.name,
-            type: typeof schedule.name,
+        // Validate title field - required for all formats (v2 uses title instead of name)
+        if (!schedule.title || typeof schedule.title !== 'string') {
+          console.warn(`🔍 useCSVExport - Skipping invalid schedule at index ${index}: title is missing or invalid`, {
+            title: schedule.title,
+            type: typeof schedule.title,
             schedule
           })
           return
         }
         
-        const nameTrimmed = schedule.name.trim()
-        // Skip schedules with empty names after trimming whitespace
-        if (!nameTrimmed) {
-          console.warn(`🔍 useCSVExport - Skipping schedule ${index} with empty name after trim`)
+        const titleTrimmed = schedule.title.trim()
+        // Skip schedules with empty titles after trimming whitespace
+        if (!titleTrimmed) {
+          console.warn(`🔍 useCSVExport - Skipping schedule ${index} with empty title after trim`)
           return
         }
         
@@ -248,10 +248,10 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
             dateValue: date
           })
           
-          if (nameTrimmed && (start || date)) {
+          if (titleTrimmed && (start || date)) {
             console.log(`🔍 useCSVExport - Adding legacy row for schedule ${index}`)
             csvFile += processRow([
-              schedule.name,                    // Housekeeper name
+              schedule.title,                   // Housekeeper title (v2 format)
               '',                               // No assignee for legacy format
               date,                             // Schedule date
               start,                            // Start time
@@ -314,7 +314,7 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
             if (assigneeTrimmed && time) {
               console.log(`🔍 useCSVExport - Adding entry row for schedule ${index}, entry ${entryIndex}`)
               csvFile += processRow([
-                schedule.name,                    // Housekeeper name (same for all entries)
+                schedule.title,                   // Housekeeper title (v2 format, same for all entries)
                 entry.assignee,                   // Specific assignee for this entry
                 schedule.date || '',              // Schedule date (same for all entries)
                 time,                             // Entry-specific start time
