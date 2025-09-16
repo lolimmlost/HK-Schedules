@@ -20,7 +20,11 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ScheduleTable ErrorBoundary caught an error:', error, errorInfo)
+    console.error('🔍 ErrorBoundary - Component:', errorInfo.componentStack);
+    console.error('🔍 ErrorBoundary - Error:', error);
+    console.error('🔍 ErrorBoundary - Full Stack:', errorInfo.componentStack);
+    console.error('🔍 ErrorBoundary - Current schedules state:', JSON.stringify(window.localStorage.getItem('housekeeperSchedules'), null, 2));
+    console.error('🔍 ErrorBoundary - Operation context: Check browser network/localStorage for recent changes (import/delete)');
   }
 
   render() {

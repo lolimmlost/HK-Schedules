@@ -74,6 +74,7 @@ export function ScheduleTable({ schedules, onEdit, onDelete, onAddSchedule }: Sc
     }
   }, [safeSchedules])
 
+  // All hooks first - unconditional
   const [deletingId, setDeletingId] = React.useState<string | null>(null)
   const [isSorted, setIsSorted] = React.useState<'name' | 'date' | 'start' | null>(null)
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc')
@@ -91,52 +92,22 @@ export function ScheduleTable({ schedules, onEdit, onDelete, onAddSchedule }: Sc
     assigneeCount
   } = useScheduleFilter(migratedSchedules, selectedAssignee)
 
-  const isSmallScreen = window.innerWidth < 768
+  // Proper hook for responsive detection
+  const [isSmallScreen, setIsSmallScreen] = React.useState(window.innerWidth < 768)
+  
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth < 768)
+    }
+    
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   console.log('🔍 ScheduleTable render debug - isSmallScreen:', isSmallScreen, 'schedules.length:', safeSchedules.length, 'window.innerWidth:', window.innerWidth)
 
-  if (safeSchedules.length === 0) {
-    console.log('🔍 ScheduleTable: Rendering empty state')
-    return (
-      <Card className="max-w-md mx-auto">
-        <CardHeader className="flex flex-col items-center justify-center space-y-2 text-center p-8">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <User className="h-8 w-8 text-primary" />
-          </div>
-          <CardTitle className="text-xl">No Schedules Yet</CardTitle>
-          <p className="text-muted-foreground text-sm max-w-sm">
-            Get started by adding your first housekeeper schedule. You can create schedules for different days and assign tasks to your team.
-          </p>
-        </CardHeader>
-        <CardContent className="p-6 pb-8">
-          <div className="flex justify-center">
-            {onAddSchedule ? (
-              <Button
-                onClick={onAddSchedule}
-                size="lg"
-                className="w-full max-w-sm bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add First Schedule
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full max-w-sm"
-                disabled
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add First Schedule
-              </Button>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground text-center mt-4">
-            Or use the action bar above to get started
-          </p>
-        </CardContent>
-      </Card>
-    )
-  }
+  // Compute empty state after all hooks
+  const showEmptyState = safeSchedules.length === 0
 const handleDelete = async (id: string) => {
   if (deletingId === id) return // Already deleting
 
@@ -207,6 +178,7 @@ const toggleExpand = (scheduleId: string) => {
 
 console.log('🔍 ScheduleTable: About to render table with', safeSchedules.length, 'schedules, isSmallScreen:', isSmallScreen)
 console.log('🔍 ScheduleTable: sortedSchedules:', sortedSchedules)
+
   return (
     <Card className="w-full">
       <CardHeader className="pb-4">

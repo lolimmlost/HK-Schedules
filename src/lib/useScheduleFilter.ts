@@ -47,21 +47,26 @@ export function useScheduleFilter(
         })
       } else {
         // Legacy format: create single entry and check assignee
-        if (!schedule.start || !schedule.end) return // Skip invalid legacy
+        if (!schedule.start || !schedule.end || !schedule.name) return // Skip invalid legacy
         
-        const tasks = schedule.tasks || "No tasks specified"
-        const duration = getDuration(schedule.start, schedule.end)
-        const legacyEntry: Entry = {
-          id: `${schedule.id}-entry-1`,
-          time: schedule.start,
-          duration,
-          tasks,
-          assignee: schedule.name,
-          status: 'pending'
-        }
-        
-        if (selectedAssignee === "all" || legacyEntry.assignee === selectedAssignee) {
-          scheduleEntries.push(legacyEntry)
+        try {
+          const tasks = schedule.tasks || "No tasks specified"
+          const duration = getDuration(schedule.start, schedule.end)
+          const legacyEntry: Entry = {
+            id: `${schedule.id}-entry-1`,
+            time: schedule.start,
+            duration: duration || '0',
+            tasks,
+            assignee: schedule.name,
+            status: 'pending'
+          }
+          
+          if (selectedAssignee === "all" || legacyEntry.assignee === selectedAssignee) {
+            scheduleEntries.push(legacyEntry)
+          }
+        } catch (error) {
+          console.warn(`🔍 useScheduleFilter - skipping invalid legacy schedule ${schedule.id}:`, error)
+          // Don't add invalid legacy entries to prevent crashes
         }
       }
       

@@ -9,6 +9,7 @@ import { useCSVExport } from "@/lib/useCSVExport"
 import { AppHeader } from "@/components/AppHeader"
 import { ActionBar } from "@/components/ActionBar"
 import { ImportSection } from "@/components/ImportSection"
+import { ErrorBoundary } from "@/components/ui/error-boundary"
 //import { User, Plus, Download, Upload, Printer, Calendar, Clock, List } from "lucide-react"
 import './index.css'
 
@@ -44,10 +45,10 @@ function App() {
       let startIndex = 0
       if (lines.length > 0) {
         const firstLineParts = lines[0].split(',').map(part => part.trim().replace(/"/g, ''))
-        if (firstLineParts.length >= 5 &&
-            firstLineParts[0].toLowerCase() === 'name' &&
-            firstLineParts[2].toLowerCase() === 'start' &&
-            firstLineParts[3].toLowerCase() === 'end') {
+        if (firstLineParts.length >= 6 &&
+            firstLineParts[0].toLowerCase() === 'housekeeper' &&
+            firstLineParts[2].toLowerCase() === 'date' &&
+            firstLineParts[3].toLowerCase().includes('start')) {
           startIndex = 1
         }
       }
@@ -57,28 +58,54 @@ function App() {
         if (!line) continue
 
         const parts = line.split(',').map(part => part.trim().replace(/"/g, ''))
-        if (parts.length >= 4) {
-          const name = parts[0]
-          const date = parts[1] || ''
-          const start = parts[2]
-          const end = parts[3]
-          const tasks = parts.slice(4).join(', ')
+        if (parts.length >= 6) {
+          const housekeeper = parts[0]
+          const assignee = parts[1] || housekeeper
+          const date = parts[2]
+          const startTime = parts[3]
+          const durationStr = parts[4]
+          const tasks = parts.slice(5).join(', ')
 
-          if (name && start && end && !name.toLowerCase().includes('name')) {
-            addSchedule({
-              id: Date.now().toString() + importedCount++,
-              name,
-              date,
-              start,
-              end,
-              tasks
-            })
+          if (housekeeper && startTime && !housekeeper.toLowerCase().includes('housekeeper')) {
+            try {
+              // Parse duration like "1h" or "2.5h"
+              let durationHours = 1 // default
+              if (durationStr) {
+                const durationMatch = durationStr.match(/(\d+(?:\.\d+)?)h/)
+                if (durationMatch) {
+                  durationHours = parseFloat(durationMatch[1])
+                }
+              }
+
+              // Calculate end time from start time + duration
+              const [startHour, startMin] = startTime.split(':').map(Number)
+              const totalStartMinutes = startHour * 60 + startMin
+              const durationMinutes = durationHours * 60
+              const endMinutes = totalStartMinutes + durationMinutes
+              const endHour = Math.floor(endMinutes / 60) % 24
+              const endMin = endMinutes % 60
+              const endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`
+
+              const newSchedule = {
+                id: Date.now().toString() + importedCount++,
+                name: assignee || housekeeper,
+                date: date.trim(),
+                start: startTime,
+                end: endTime,
+                tasks: tasks || 'No tasks specified'
+              }
+              
+              addSchedule(newSchedule)
+              console.log('🔍 App - imported schedule:', newSchedule.name, 'Duration:', durationHours + 'h')
+            } catch (error) {
+              console.warn('🔍 App - failed to import schedule:', housekeeper, error)
+            }
           }
         }
       }
 
       event.target.value = ''
-      alert(`${importedCount} schedules imported.`)
+      alert(`${importedCount} schedules imported successfully.`)
     }
     reader.readAsText(file)
   }
@@ -101,8 +128,14 @@ function App() {
   }
 
   const handleDeleteSchedule = (id: string) => {
-    if (confirm('Are you sure you want to delete this schedule?')) {
-      deleteSchedule(id)
+    if (confirm('Are you sure you want to delete this schedule? This action cannot be undone.')) {
+      try {
+        deleteSchedule(id)
+        console.log(`🔍 Successfully deleted schedule: ${id}`)
+      } catch (error) {
+        console.error('🔍 Delete failed:', error)
+        alert('Failed to delete schedule. Please try again or refresh the page.')
+      }
     }
   }
 
@@ -312,12 +345,14 @@ function App() {
 
         {/* Schedule Table - Screen View */}
         <div className="no-print">
-          <ScheduleTable
-            schedules={schedules}
-            onEdit={handleEditSchedule}
-            onDelete={handleDeleteSchedule}
-            onAddSchedule={handleAddClick}
-          />
+          <ErrorBoundary>
+            <ScheduleTable
+              schedules={schedules}
+              onEdit={handleEditSchedule}
+              onDelete={handleDeleteSchedule}
+              onAddSchedule={handleAddClick}
+            />
+          </ErrorBoundary>
         </div>
       
         {/* Print Schedule - Always rendered but hidden on screen */}
