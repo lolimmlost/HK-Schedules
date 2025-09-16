@@ -75,7 +75,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
       description: initialData?.description || "",
       category: (initialData?.category as any) || 'general',
       date: initialData?.date || "",
-      entries: initialData?.entries?.length ? initialData.entries : [{ id: uuidv4() }],
+      entries: initialData?.entries?.length ? initialData.entries : [{ id: uuidv4(), time: '09:00', task: 'General Task', assignee: 'Unassigned', status: 'pending', recurrence: 'none' }],
       version: '2.0',
       recurrence: (initialData?.recurrence as any) || 'none',
     },
@@ -100,7 +100,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
   }
 
   const addEntry = () => {
-    append({ id: uuidv4(), time: '', duration: 60, task: '', assignee: '', status: 'pending', recurrence: 'none' })
+    append({ id: uuidv4(), time: '09:00', duration: 60, task: 'General Task', assignee: '', status: 'pending', recurrence: 'none' })
   }
 
   const watchEntries = form.watch('entries')
@@ -108,7 +108,28 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
 
   React.useEffect(() => {
     if (isEditing && initialData) {
-      form.reset(initialData)
+      try {
+        form.reset({
+          ...initialData,
+          entries: initialData.entries || [],
+          title: initialData.title || '',
+          category: initialData.category || 'general',
+          recurrence: initialData.recurrence || 'none'
+        })
+      } catch (error) {
+        console.error('Form reset error:', error)
+        // Fallback to empty form
+        form.reset({
+          id: uuidv4(),
+          title: '',
+          description: '',
+          category: 'general',
+          date: '',
+          entries: [{ id: uuidv4(), time: '09:00', duration: 60, task: 'General Task', assignee: 'Unassigned', status: 'pending', recurrence: 'none' }],
+          version: '2.0',
+          recurrence: 'none'
+        })
+      }
     }
   }, [initialData, isEditing, form])
 

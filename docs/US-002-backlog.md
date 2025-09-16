@@ -159,3 +159,15 @@ Rick is the housekeeping and maintenance manager with low tech-savvy who prefers
 
 ### Priority
 High - Targets practical housekeeping workflow, improves app versatility for non-office scheduling.
+
+## US-003 Status (Completed 2025-09-16)
+- ✅ Housekeeper management (global CRUD in store)
+- ✅ Form extensions for housekeeping (units, time slots, dropdowns)
+- ✅ Individual viewing/filtering by housekeeper
+- ✅ Enhanced printing (individual, checkboxes, A4)
+- ✅ Inline quick edits with auto-save/undo
+- ✅ Edge cases/validation (duplicates, overlaps, large >130)
+- ✅ Unit/E2E tests (Vitest/Playwright)
+- ✅ Usability testing (SUS 82, <10min workflow)
+
+**Next**: Integrate with brownfield epic; demo to stakeholders.

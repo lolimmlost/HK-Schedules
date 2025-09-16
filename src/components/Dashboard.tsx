@@ -13,9 +13,10 @@ interface DashboardProps {
   onEdit: (schedule: Schedule) => void
   onDelete: (id: string) => void
   onView: (schedule: Schedule) => void
+  onAddSchedule?: () => void
 }
 
-export function Dashboard({ onEdit, onDelete, onView }: DashboardProps) {
+export function Dashboard({ onEdit, onDelete, onView, onAddSchedule }: DashboardProps) {
   const { schedules, getSchedules } = useScheduleStore()
   const allSchedules = getSchedules()
 
@@ -83,7 +84,7 @@ export function Dashboard({ onEdit, onDelete, onView }: DashboardProps) {
           Get started by creating your first schedule. Organize your housekeeping tasks, 
           assign team members, and manage multiple schedules efficiently.
         </p>
-        <Button size="lg" onClick={() => { /* Trigger add form */ }}>
+        <Button size="lg" onClick={onAddSchedule ?? (() => {})}>
           <Plus className="h-4 w-4 mr-2" />
           Create First Schedule
         </Button>

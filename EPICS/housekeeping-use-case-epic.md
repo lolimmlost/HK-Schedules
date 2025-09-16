@@ -100,3 +100,9 @@ This epic introduces specialized support for housekeeping/maintenance managers l
 - Post-Epic: HK-002 Bulk Import for advanced housekeeping; analytics for usage tracking.
 
 This epic positions HK-Schedules as versatile for both office and operations management, driving user growth through targeted simplicity.
+## US-003 Completion Notes (2025-09-16)
+- Feature delivered: Low-tech housekeeping management for 130+ units.
+- Key Deliverables: Housekeeper config, simplified form, individual prints, inline edits.
+- Validation: Tests pass, usability SUS 82, performance <2s.
+- Demo Prep: Run workflow with sample 130-unit schedule; highlight simplicity for Rick persona.
+- Outstanding: None; ready for integration testing.

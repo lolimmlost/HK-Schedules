@@ -3,16 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { User, Calendar, Clock } from "lucide-react"
 
 import { formatDate, getDuration } from "@/lib/utils"
-import type { Schedule } from "./schedule-form"
+import type { Schedule, Entry } from "./schedule-form"
 
 interface PrintScheduleProps {
   schedules: Schedule[]
+  housekeeper?: string
   companyName?: string
   printedAt?: Date
   className?: string
 }
 
-export function PrintSchedule({ schedules, companyName = "Housekeeper Services", printedAt = new Date(), className }: PrintScheduleProps) {
+export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeeper Services", printedAt = new Date(), className }: PrintScheduleProps) {
   // Defensive check for schedules - ensure it's always an array to prevent reduce errors
   let safeSchedules: Schedule[] = []
   if (Array.isArray(schedules)) {
@@ -23,26 +24,33 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
     safeSchedules = []
   }
 
+  // Filter for individual housekeeper if specified
+  const filteredSchedules = safeSchedules.filter(s =>
+    !housekeeper || s.entries?.some(e => e.assignee === housekeeper)
+  )
+
+  // Flatten and filter entries for the housekeeper
+  const filteredEntries: Entry[] = filteredSchedules
+    .filter(s => s.category === 'housekeeping') // Focus on housekeeping
+    .flatMap(s => s.entries || [])
+    .filter(e => !housekeeper || e.assignee === housekeeper)
+    .sort((a, b) => a.time.localeCompare(b.time))
+
   const rootClassName = `max-w-4xl mx-auto p-8 print:p-0 print:bg-white print:pt-4 ${className || ''}`
 
-
-  const totalDuration = safeSchedules.reduce((total, schedule) => {
-    const startTime = new Date(`2000-01-01T${schedule.start}:00`)
-    const endTime = new Date(`2000-01-01T${schedule.end}:00`)
-    const diff = endTime.getTime() - startTime.getTime()
-    return total + diff
-  }, 0)
+  // Calculate total duration from entries
+  const totalDuration = filteredEntries.reduce((total, entry) => total + (entry.duration * 60 * 1000), 0)
 
   const totalHours = Math.floor(totalDuration / (1000 * 60 * 60))
   const totalMinutes = Math.floor((totalDuration % (1000 * 60 * 60)) / (1000 * 60))
 
-  if (safeSchedules.length === 0) {
+  if (filteredEntries.length === 0) {
     return (
       <div className={`max-w-4xl mx-auto p-8 print:p-0 print:bg-white ${className || ''}`}>
         <div className="text-center py-12">
           <User className="h-16 w-16 text-gray-300 mx-auto mb-4 print:hidden" />
-          <h1 className="text-2xl font-bold text-gray-500 mb-2">No Schedules to Print</h1>
-          <p className="text-gray-400">There are currently no schedules available to print.</p>
+          <h1 className="text-2xl font-bold text-gray-500 mb-2">No Schedule for {housekeeper || 'Selected'}</h1>
+          <p className="text-gray-400">There are currently no assignments available to print.</p>
         </div>
       </div>
     )
@@ -52,33 +60,33 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
     <div className={rootClassName}>
       {/* Header */}
       <div className="text-center mb-8 print:mb-6 print:pb-4">
-        <h1 className="text-3xl font-bold text-foreground mb-2 print:text-4xl print:mb-4">
+        <h1 className="text-3xl font-bold text-foreground mb-2 print:text-3xl print:mb-4">
           {companyName}
         </h1>
-        <p className="text-lg text-muted-foreground mb-4 print:text-xl print:mb-2">
-          Housekeeper Schedule
+        <p className="text-lg text-muted-foreground mb-4 print:text-lg print:mb-2">
+          {housekeeper ? `${housekeeper}'s ` : ''}Housekeeper Schedule
         </p>
         <div className="border-t pt-4 print:border-t print:pt-4 print:border-black">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm print:text-base">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm print:text-sm">
             <div>
               <div className="font-medium">Printed on:</div>
-              <div>{printedAt.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+              <div>{printedAt.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
               })}</div>
             </div>
             <div>
               <div className="font-medium">Time:</div>
-              <div>{printedAt.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
+              <div>{printedAt.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
               })}</div>
             </div>
             <div className="md:col-span-2">
-              <div className="font-medium">Total Schedules:</div>
-              <div className="text-lg font-semibold">{safeSchedules.length}</div>
+              <div className="font-medium">Total Assignments:</div>
+              <div className="text-lg font-semibold">{filteredEntries.length}</div>
             </div>
             {totalHours > 0 && (
               <div className="md:col-span-2">
@@ -96,10 +104,10 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
           <CardHeader className="pb-4 print:border-b print:pb-4 print:pt-0 print:border-black">
             <div className="flex items-center gap-2 print:mb-2">
               <Calendar className="h-5 w-5" />
-              <CardTitle className="text-xl print:text-2xl">Housekeeper Schedule</CardTitle>
+              <CardTitle className="text-xl print:text-xl">Individual Schedule</CardTitle>
             </div>
-            <p className="text-sm text-muted-foreground print:text-base print:font-normal">
-              Detailed schedule for housekeeper assignments - {printedAt.toLocaleDateString('en-US', {
+            <p className="text-sm text-muted-foreground print:text-sm print:font-normal">
+              Assignments for {housekeeper || 'team'} - {printedAt.toLocaleDateString('en-US', {
                 month: 'long',
                 day: 'numeric',
                 year: 'numeric'
@@ -110,95 +118,63 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
             <div className="overflow-x-auto print:overflow-visible print:table-auto">
               <table className="w-full border-collapse print:border print:border-black">
                 <thead>
-                  <tr className="border-b print:border-t print:border-b print:border-black bg-muted/50 print:bg-gray-100">
-                    <th className="border border-gray-300 print:border-black p-4 text-left font-semibold print:text-sm print:p-3">
-                      Housekeeper
+                  <tr className="border-b print:border-t print:border-b print:border-black bg-muted/50 print:bg-gray-100 print:sticky top-0 print:z-10">
+                    <th className="border border-gray-300 print:border-black p-3 text-left font-semibold print:text-xs print:p-2">
+                      Unit/Task
                     </th>
-                    <th className="border border-gray-300 print:border-black p-4 text-left font-semibold print:text-sm print:p-3">
-                      Date
-                    </th>
-                    <th className="border border-gray-300 print:border-black p-4 text-center font-semibold print:text-sm print:p-3">
+                    <th className="border border-gray-300 print:border-black p-3 text-center font-semibold print:text-xs print:p-2">
                       Time Slot
                     </th>
-                    <th className="border border-gray-300 print:border-black p-4 text-center font-semibold print:text-sm print:p-3">
+                    <th className="border border-gray-300 print:border-black p-3 text-center font-semibold print:text-xs print:p-2">
                       Duration
                     </th>
-                    <th className="border border-gray-300 print:border-black p-4 text-left font-semibold print:text-sm print:p-3">
-                      Tasks
+                    <th className="border border-gray-300 print:border-black p-3 text-center font-semibold print:text-xs print:p-2">
+                      Status
+                    </th>
+                    <th className="border border-gray-300 print:border-black p-3 text-left font-semibold print:text-xs print:p-2">
+                      Notes
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {safeSchedules.map((schedule, index) => (
+                  {filteredEntries.map((entry, index) => (
                     <tr
-                      key={schedule.id}
+                      key={entry.id}
                       className={`border-b print:border-b print:border-black ${index % 2 === 0 ? 'bg-background' : 'bg-muted/50 print:bg-gray-50'}`}
                     >
-                      {/* Housekeeper */}
-                      <td className="border border-gray-300 print:border-black p-4 print:p-3">
-                        <div className="flex items-center gap-3 print:gap-2">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center print:w-8 print:h-8 print:bg-primary/20">
-                            <User className="h-5 w-5 text-primary print:h-4 print:w-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="font-medium text-foreground truncate print:font-semibold">{schedule.name}</div>
-                            <div className="text-xs text-muted-foreground print:hidden">
-                              Housekeeper
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Date */}
-                      <td className="border border-gray-300 print:border-black p-4 print:p-3">
-                        <div className="flex items-center gap-2 print:gap-1 print:flex-col print:items-start">
-                          <Calendar className="h-4 w-4 text-muted-foreground print:h-3 print:w-3" />
-                          <div className="print:text-sm print:font-medium">
-                            {formatDate(schedule.date)}
-                          </div>
-                        </div>
+                      {/* Unit/Task */}
+                      <td className="border border-gray-300 print:border-black p-3 print:p-2 max-w-xs">
+                        <span className="break-words print:text-xs">{entry.task}</span>
                       </td>
 
                       {/* Time Slot */}
-                      <td className="border border-gray-300 print:border-black p-4 text-center print:p-3">
-                        <div className="flex flex-col items-center gap-1 print:gap-0">
-                          <div className="font-medium text-sm print:text-sm print:font-semibold">
-                            {schedule.start} - {schedule.end}
-                          </div>
-                          <div className="text-xs text-muted-foreground print:hidden">
-                            <Clock className="h-3 w-3 inline mr-1" />
-                            {schedule.start && schedule.end ? getDuration(schedule.start, schedule.end) : 'N/A'}
-                          </div>
-                          <div className="print:hidden">
-                            <Badge variant="outline" className="text-xs mt-1">
-                              {schedule.start && schedule.end ? getDuration(schedule.start, schedule.end) : 'N/A'}
-                            </Badge>
-                          </div>
+                      <td className="border border-gray-300 print:border-black p-3 text-center print:p-2 print:text-xs">
+                        <div className="font-medium">
+                          {entry.time}
                         </div>
                       </td>
 
                       {/* Duration */}
-                      <td className="border border-gray-300 print:border-black p-4 text-center print:p-3">
-                        <Badge variant="secondary" className="text-xs print:text-sm">
-                          {schedule.start && schedule.end ? getDuration(schedule.start, schedule.end) : 'N/A'}
+                      <td className="border border-gray-300 print:border-black p-3 text-center print:p-2 print:text-xs">
+                        <Badge variant="secondary" className="text-xs print:text-xs">
+                          {entry.duration} min
                         </Badge>
                       </td>
 
-                      {/* Tasks */}
-                      <td className="border border-gray-300 print:border-black p-4 print:p-3 max-w-md">
-                        <div className="space-y-2 print:space-y-1">
-                          {schedule.tasks ? (
-                            schedule.tasks.split(',').map((task, idx) => (
-                              <div key={idx} className="flex items-start gap-2 text-sm print:text-sm print:gap-1">
-                                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0 print:w-2 print:h-2 print:mt-2 print:bg-black"></div>
-                                <span className="break-words">{task.trim()}</span>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-sm text-muted-foreground italic print:text-gray-600">
-                              No tasks specified
-                            </div>
-                          )}
+                      {/* Status Checkbox */}
+                      <td className="border border-gray-300 print:border-black p-3 text-center print:p-2">
+                        <input
+                          type="checkbox"
+                          checked={entry.status === 'completed'}
+                          disabled
+                          className="print:scale-125 print:mx-auto"
+                        />
+                      </td>
+
+                      {/* Notes */}
+                      <td className="border border-gray-300 print:border-black p-3 print:p-2 max-w-md">
+                        <div className="text-sm print:text-xs">
+                          {entry.notes || 'N/A'}
                         </div>
                       </td>
                     </tr>
@@ -248,16 +224,20 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
         {`
           @media print {
             @page {
-              margin: 0.75in;
-              size: letter;
+              margin: 0.5in;
+              size: A4 portrait;
+              margin-top: 0.75in;
+              margin-bottom: 0.75in;
             }
             
             body {
               -webkit-print-color-adjust: exact !important;
               color-adjust: exact !important;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              font-size: 11pt;
-              line-height: 1.4;
+              font-family: Arial, sans-serif;
+              font-size: 10pt;
+              line-height: 1.3;
+              width: 210mm;
+              max-width: 210mm;
             }
             
             .print\\:border-black {
@@ -269,33 +249,42 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
               -webkit-print-color-adjust: exact !important;
             }
             
-            .print\\:text-sm {
-              font-size: 10pt !important;
+            table {
+              font-size: 9pt;
+              width: 100%;
+              page-break-inside: auto;
+              border-collapse: collapse;
             }
             
-            table {
-              font-size: 10pt;
-              page-break-inside: avoid;
-              width: 100%;
+            thead {
+              display: table-header-group;
             }
             
             th, td {
               page-break-inside: avoid;
               border: 1px solid black !important;
-              padding: 0.5em;
+              padding: 0.4em 0.3em;
               vertical-align: top;
+              word-wrap: break-word;
             }
             
             th {
               background-color: #f3f4f6 !important;
               -webkit-print-color-adjust: exact !important;
-              font-weight: 600;
+              font-weight: bold;
               text-align: left;
+              position: sticky;
+              top: 0;
+              z-index: 10;
             }
             
             tr {
               page-break-inside: avoid;
               page-break-after: auto;
+            }
+            
+            tbody tr {
+              page-break-inside: avoid;
             }
             
             h1, h2 {
@@ -308,18 +297,17 @@ export function PrintSchedule({ schedules, companyName = "Housekeeper Services",
               display: none !important;
             }
             
-            @media print {
-              .no-print {
-                display: block !important;
-              }
-            }
-            
             .print-hidden {
               display: none !important;
             }
             
             .print-only {
               display: block !important;
+            }
+
+            /* For 130+ units: smaller font if needed */
+            tbody tr:nth-child(n+31) {
+              font-size: 8pt;
             }
           }
         `}

@@ -404,6 +404,7 @@ function App() {
               onEdit={handleEditSchedule}
               onDelete={handleDeleteSchedule}
               onView={handleViewSchedule}
+              onAddSchedule={handleAddClick}
             />
           </ErrorBoundary>
         )}

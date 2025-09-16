@@ -17,11 +17,21 @@ import { useScheduleFilter } from "@/lib/useScheduleFilter"
 import { ScheduleDesktopTable } from "./ScheduleDesktopTable"
 //import { ScheduleMobileCards } from "./ScheduleMobileCards"
 import type { Schedule, Entry } from "./schedule-form"
+import { useScheduleStore } from "@/lib/useScheduleStore"
+import { useToast } from "@/hooks/use-toast"
+import { Input } from "@/components/ui/input"
+import { useState } from "react"
 interface ScheduleTableProps {
   schedules: Schedule[] | { schedules: Schedule[] } | null
   onEdit: (schedule: Schedule) => void
   onDelete: (id: string) => void
   onAddSchedule?: () => void
+}
+
+interface EditState {
+  entryId: string
+  field: 'status' | 'assignee' | 'time'
+  previousValue: string
 }
 
 export function ScheduleTable({ schedules, onEdit, onDelete, onAddSchedule }: ScheduleTableProps) {
@@ -35,30 +45,23 @@ export function ScheduleTable({ schedules, onEdit, onDelete, onAddSchedule }: Sc
       return legacy
     }
     
-    if (!legacy.start || !legacy.end) {
-      return legacy
-    }
-    
-    // Handle empty tasks gracefully
-    const tasks = legacy.tasks || "No tasks specified"
-    
-    const duration = getDuration(legacy.start, legacy.end)
+    // For legacy single-entry, create from title/description if no entries
+    const task = legacy.title || legacy.description || "General task"
     const entry: Entry = {
       id: `${legacy.id}-entry-1`,
-      time: legacy.start,
-      duration,
-      tasks,
-      assignee: legacy.name, // Legacy: housekeeper name becomes assignee
-      status: 'pending'
+      time: '09:00', // Default
+      duration: 60,
+      task,
+      assignee: 'Unassigned',
+      status: 'pending' as const,
+      recurrence: 'none' as const,
+      notes: undefined
     }
     
     return {
       ...legacy,
       entries: [entry],
-      // Keep legacy fields for backward compatibility during transition
-      start: legacy.start,
-      end: legacy.end,
-      tasks
+      version: '2.0'
     }
   }
   
@@ -82,6 +85,17 @@ export function ScheduleTable({ schedules, onEdit, onDelete, onAddSchedule }: Sc
 
   // Expanded state management for desktop view
   const [expandedSchedules, setExpandedSchedules] = React.useState<Set<string>>(new Set())
+
+  // Inline edit state
+  const [editing, setEditing] = useState<EditState | null>(null)
+
+  const { updateSchedule, getHousekeepers } = useScheduleStore()
+  const { toast } = useToast()
+
+  const housekeepers = getHousekeepers()
+
+  // Undo timeout
+  const undoTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
 
   // Use the filtering hook
   const {
@@ -124,6 +138,73 @@ const handleDelete = async (id: string) => {
   setDeletingId(null)
 }
 
+const handleInlineEdit = (schedule: Schedule, entry: Entry, field: 'status' | 'assignee' | 'time', newValue: string) => {
+  const previousValue = entry[field] as string
+  const entryIndex = schedule.entries?.findIndex(e => e.id === entry.id) || 0
+
+  // Optimistic update
+  const updatedSchedule = {
+    ...schedule,
+    entries: schedule.entries?.map(e =>
+      e.id === entry.id ? { ...e, [field]: newValue } : e
+    ) || []
+  }
+  updateSchedule(updatedSchedule)
+
+  // Set undo state
+  setEditing({ entryId: entry.id, field, previousValue })
+
+  // Toast with undo
+  toast({
+    title: `Updated ${field}`,
+    description: `${field} changed to "${newValue}"`,
+    duration: 5000,
+    action: (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          // Undo
+          const undoneSchedule = {
+            ...schedule,
+            entries: schedule.entries?.map(e =>
+              e.id === entry.id ? { ...e, [field]: previousValue } : e
+            ) || []
+          }
+          updateSchedule(undoneSchedule)
+          setEditing(null)
+          if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current)
+        }}
+      >
+        Undo
+      </Button>
+    ),
+  })
+
+  // Auto-dismiss undo after timeout
+  if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current)
+  undoTimeoutRef.current = setTimeout(() => {
+    setEditing(null)
+  }, 5000)
+}
+
+// Close edit on escape (simplified)
+React.useEffect(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && editing) {
+      const schedule = migratedSchedules.find(s => s.entries?.some(e => e.id === editing.entryId))
+      if (schedule && editing) {
+        const entry = schedule.entries?.find(e => e.id === editing.entryId)
+        if (entry) {
+          handleInlineEdit(schedule, entry, editing.field, editing.previousValue)
+        }
+      }
+    }
+  }
+  document.addEventListener('keydown', handleKeyDown)
+  return () => document.removeEventListener('keydown', handleKeyDown)
+}, [editing, migratedSchedules])
+
 const sortedSchedules = React.useMemo(() => {
   if (!isSorted) return filteredSchedules
 
@@ -132,17 +213,17 @@ const sortedSchedules = React.useMemo(() => {
 
     switch (isSorted) {
       case 'name':
-        aValue = a.name.toLowerCase()
-        bValue = b.name.toLowerCase()
+        aValue = a.title.toLowerCase()
+        bValue = b.title.toLowerCase()
         break
       case 'date':
         aValue = a.date || ''
         bValue = b.date || ''
         break
       case 'start':
-        // Use first entry time or legacy start time
-        aValue = a.entries?.[0]?.time || a.start || ''
-        bValue = b.entries?.[0]?.time || b.start || ''
+        // Use first entry time
+        aValue = a.entries?.[0]?.time || ''
+        bValue = b.entries?.[0]?.time || ''
         break
       default:
         return 0
@@ -256,32 +337,8 @@ console.log('🔍 ScheduleTable: sortedSchedules:', sortedSchedules)
           <div className="space-y-4">
             {filteredSchedules
               .filter((schedule: Schedule) => {
-                console.log('🔍 Mobile filtering schedule:', schedule.id)
-                
-                // Show any schedule that has either entries or legacy fields
-                const hasEntries = schedule.entries && schedule.entries.length > 0
-                const hasLegacyFields = schedule.start && schedule.end // tasks is optional
-                
-                if (!hasEntries && !hasLegacyFields) {
-                  console.log('🔍 Mobile filtering OUT schedule:', schedule.id, 'no valid data')
-                  return false
-                }
-                
-                if (hasEntries) {
-                  // For new format, show if has any entries (relaxed validation)
-                  const validEntry = schedule.entries!.some(entry => entry.time)
-                  console.log('🔍 Mobile filtering entry-based schedule:', schedule.id, 'valid:', validEntry)
-                  return validEntry
-                }
-                
-                // Legacy format - basic validation
-                console.log('🔍 Mobile filtering legacy schedule:', schedule.id, 'valid times:', !!(schedule.start && schedule.end))
-                if (!schedule.start || !schedule.end) return false
-                const startTime = new Date(`2000-01-01T${schedule.start}:00`)
-                const endTime = new Date(`2000-01-01T${schedule.end}:00`)
-                const isValidTime = startTime < endTime
-                console.log('🔍 Mobile legacy time validation:', schedule.start, schedule.end, isValidTime)
-                return isValidTime
+                // Show schedules with valid entries
+                return schedule.entries && schedule.entries.length > 0 && schedule.entries.some(entry => entry.time)
               })
               .map((schedule: Schedule) => (
                 <Card key={schedule.id} className="w-full">
@@ -291,7 +348,7 @@ console.log('🔍 ScheduleTable: sortedSchedules:', sortedSchedules)
                         <User className="h-5 w-5 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-medium text-foreground truncate">{schedule.name}</h3>
+                        <h3 className="font-medium text-foreground truncate">{schedule.title}</h3>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                           <Calendar className="h-3 w-3" />
                           {formatDate(schedule.date)}
@@ -324,36 +381,91 @@ console.log('🔍 ScheduleTable: sortedSchedules:', sortedSchedules)
                   </CardHeader>
                   <CardContent className="p-4 pt-0">
                     <div className="grid grid-cols-1 gap-3 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground flex items-center gap-2">
-                          <Clock className="h-3 w-3" />
-                          Time
-                        </span>
-                        <span className="font-medium">
-                          {schedule.entries?.[0]?.time || schedule.start} - {schedule.entries?.[0]?.time ? schedule.end : schedule.end}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Duration</span>
-                        <Badge variant="outline" className="text-xs px-2 py-0.5">
-                          {schedule.start && schedule.end ? getDuration(schedule.start, schedule.end) : schedule.entries?.[0]?.duration || 'N/A'}
-                        </Badge>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-muted-foreground">Tasks</span>
-                        <div className="ml-2 space-y-1">
-                          {(schedule.tasks || schedule.entries?.[0]?.tasks) ? (
-                            String(schedule.tasks || schedule.entries?.[0]?.tasks).split(',').map((task: string, idx: number) => (
-                              <div key={idx} className="flex items-start gap-2 text-xs">
-                                <div className="w-1 h-1 rounded-full bg-foreground mt-1.5 flex-shrink-0"></div>
-                                <span>{task.trim()}</span>
+                      {schedule.entries && schedule.entries.length > 0 ? (
+                        schedule.entries.map((entry) => (
+                          <div key={entry.id} className="border-t pt-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground flex items-center gap-2">
+                                <Clock className="h-3 w-3" />
+                                Time
+                              </span>
+                              <Input
+                                type="time"
+                                value={entry.time}
+                                onChange={(e) => {
+                                  const scheduleWithEntry = { ...schedule }
+                                  const entryIndex = schedule.entries!.findIndex(e => e.id === entry.id)
+                                  scheduleWithEntry.entries![entryIndex].time = e.target.value
+                                  handleInlineEdit(scheduleWithEntry, entry, 'time', e.target.value)
+                                }}
+                                className="w-32 text-right"
+                                size={4}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="text-muted-foreground">Assignee</span>
+                              <Select value={entry.assignee} onValueChange={(value) => {
+                                const scheduleWithEntry = { ...schedule }
+                                const entryIndex = schedule.entries!.findIndex(e => e.id === entry.id)
+                                scheduleWithEntry.entries![entryIndex].assignee = value
+                                handleInlineEdit(scheduleWithEntry, entry, 'assignee', value)
+                              }}>
+                                <SelectTrigger className="w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Unassigned">Unassigned</SelectItem>
+                                  {housekeepers.map((h: string) => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="text-muted-foreground">Status</span>
+                              <Select value={entry.status} onValueChange={(value) => {
+                                const scheduleWithEntry = { ...schedule }
+                                const entryIndex = schedule.entries!.findIndex(e => e.id === entry.id)
+                                scheduleWithEntry.entries![entryIndex].status = value as 'pending' | 'completed'
+                                handleInlineEdit(scheduleWithEntry, entry, 'status', value)
+                              }}>
+                                <SelectTrigger className="w-24">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">Pending</SelectItem>
+                                  <SelectItem value="completed">Completed</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="mt-1">
+                              <span className="text-muted-foreground">Task</span>
+                              <span className="font-medium ml-2">{entry.task}</span>
+                            </div>
+                            {entry.notes && (
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                Notes: {entry.notes}
                               </div>
-                            ))
-                          ) : (
-                            <span className="text-xs text-muted-foreground italic">No tasks specified</span>
-                          )}
-                        </div>
-                      </div>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground flex items-center gap-2">
+                              <Clock className="h-3 w-3" />
+                              Time
+                            </span>
+                            <span className="font-medium">N/A</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Duration</span>
+                            <Badge variant="outline" className="text-xs px-2 py-0.5">N/A</Badge>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-muted-foreground">Tasks</span>
+                            <span className="text-xs text-muted-foreground italic">No entries</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
