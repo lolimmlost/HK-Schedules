@@ -1,9 +1,14 @@
 import * as React from "react"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScheduleForm } from "@/components/schedule-form"
 import { ScheduleTable } from "@/components/schedule-table"
 import { PrintSchedule } from "@/components/print-schedule"
-import { Schedule } from "@/components/schedule-form"
+import { Dashboard } from "@/components/Dashboard"
+import { Schedule, Entry } from "@/components/schedule-form"
+import { ChevronLeft } from "lucide-react"
+import { v4 as uuidv4 } from "uuid"
+import { getDuration } from "@/lib/utils"
 import { useScheduleStore } from "@/lib/useScheduleStore"
 import { useCSVExport } from "@/lib/useCSVExport"
 import { AppHeader } from "@/components/AppHeader"
@@ -26,6 +31,8 @@ function App() {
   // Form state
   const [editingSchedule, setEditingSchedule] = React.useState<Schedule | null>(null)
   const [showForm, setShowForm] = React.useState(false)
+  const [selectedSchedule, setSelectedSchedule] = React.useState<Schedule | null>(null)
+  const [viewMode, setViewMode] = React.useState<'dashboard' | 'view'>( 'dashboard')
 
   // CSV export hook
   const exportCSV = useCSVExport()
@@ -86,17 +93,28 @@ function App() {
               const endMin = endMinutes % 60
               const endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`
 
-              const newSchedule = {
+              // Convert to v2 structure
+              const newSchedule: Schedule = {
                 id: Date.now().toString() + importedCount++,
-                name: assignee || housekeeper,
+                title: assignee || housekeeper,
+                category: 'housekeeping' as const,
+                description: tasks || 'Imported schedule',
                 date: date.trim(),
-                start: startTime,
-                end: endTime,
-                tasks: tasks || 'No tasks specified'
+                entries: [{
+                  id: uuidv4(),
+                  time: startTime,
+                  duration: durationMinutes,
+                  task: tasks || 'General housekeeping',
+                  assignee: assignee || housekeeper,
+                  status: 'pending' as const,
+                  recurrence: 'none' as const
+                }],
+                version: '2.0',
+                recurrence: 'none' as const
               }
               
               addSchedule(newSchedule)
-              console.log('🔍 App - imported schedule:', newSchedule.name, 'Duration:', durationHours + 'h')
+              console.log('🔍 App - imported schedule:', newSchedule.title, 'Duration:', durationMinutes + 'm')
             } catch (error) {
               console.warn('🔍 App - failed to import schedule:', housekeeper, error)
             }
@@ -144,6 +162,16 @@ function App() {
     setShowForm(false)
   }
 
+  const handleViewSchedule = (schedule: Schedule) => {
+    setSelectedSchedule(schedule)
+    setViewMode('view')
+  }
+
+  const handleBackToDashboard = () => {
+    setSelectedSchedule(null)
+    setViewMode('dashboard')
+  }
+
   // Action handlers
   /**
    * Handles CSV export of schedules with comprehensive error handling and debugging
@@ -170,36 +198,61 @@ function App() {
        * Ensure schedules is always a valid Schedule[] array for export
        * Handles multiple data formats from localStorage and state management
        */
-      let safeSchedules: Schedule[] = []
+      let safeSchedules: any[] = []
       
       if (Array.isArray(schedules)) {
         /**
          * Create defensive copy of schedules to break potential circular references
          * Ensures all required Schedule properties exist for CSV export
          * Prevents React state object references from causing serialization errors
+         * Handles both v1 (legacy) and v2 (new) schedule formats
          */
         console.log('🔍 App - schedules is array, creating defensive copy')
-        safeSchedules = schedules.map((schedule, index) => {
-          // Defensive copy to break circular references and ensure data integrity
-          return {
-            id: schedule.id || `temp-${index}`,
-            name: schedule.name || '',
-            date: schedule.date || '',
-            start: schedule.start || '',
-            end: schedule.end || '',
-            tasks: schedule.tasks || '',
-            /**
-             * Safely handle entries array - create shallow copies to prevent deep circular references
-             * Ensures each Entry has all required properties with fallback defaults
-             */
-            entries: schedule.entries ? schedule.entries.map((entry: any, entryIndex: number) => ({
-              id: entry.id || `temp-entry-${index}-${entryIndex}`,
-              assignee: entry.assignee || '',
-              time: entry.time || '',
-              duration: entry.duration || '',
-              tasks: entry.tasks || '',
-              status: entry.status || 'pending'
-            })) : undefined
+        safeSchedules = schedules.map((schedule: any, index: number) => {
+          // Check if legacy v1 format (has name, start, end, tasks but no entries array)
+          const isLegacy = !('entries' in schedule) && (schedule.name || schedule.start || schedule.end || schedule.tasks)
+          if (isLegacy) {
+            // Convert legacy to export format
+            return {
+              id: schedule.id || `legacy-${index}`,
+              title: schedule.name || schedule.title || '',
+              category: (schedule.category as any) || 'general',
+              description: schedule.tasks || schedule.description || '',
+              date: schedule.date || '',
+              start: schedule.start || '',
+              end: schedule.end || '',
+              entries: schedule.tasks ? [{
+                assignee: schedule.name || '',
+                time: schedule.start || '',
+                duration: schedule.end ? parseInt(getDuration(schedule.start || '09:00', schedule.end || '10:00').replace(/[^0-9]/g, '')) || 60 : 60,
+                task: schedule.tasks,
+                status: 'pending' as const,
+                recurrence: 'none' as const
+              }] : [],
+              version: '1.0',
+              recurrence: 'none' as const
+            }
+          } else {
+            // v2 format - defensive copy
+            return {
+              id: schedule.id || `temp-${index}`,
+              title: schedule.title || '',
+              category: schedule.category || 'general',
+              description: schedule.description || '',
+              date: schedule.date || '',
+              entries: schedule.entries ? schedule.entries.map((entry: any, entryIndex: number) => ({
+                id: entry.id || `temp-entry-${index}-${entryIndex}`,
+                assignee: entry.assignee || '',
+                time: entry.time || '',
+                duration: entry.duration || 60,
+                task: entry.task || '',
+                status: entry.status || 'pending',
+                notes: entry.notes || '',
+                recurrence: entry.recurrence || 'none'
+              })) : [],
+              version: schedule.version || '2.0',
+              recurrence: schedule.recurrence || 'none'
+            }
           }
         })
       } else if (schedules && typeof schedules === 'object' && 'schedules' in schedules && Array.isArray((schedules as any).schedules)) {
@@ -208,7 +261,25 @@ function App() {
          * This can occur with corrupted localStorage data or version migration issues
          */
         console.log('🔍 App - schedules has .schedules property, using that')
-        safeSchedules = (schedules as any).schedules
+        safeSchedules = (schedules as any).schedules.map((s: any) => ({
+          id: s.id || `legacy-${Math.random()}`,
+          title: s.name || s.title || '',
+          category: (s.category as any) || 'general',
+          description: s.tasks || s.description || '',
+          date: s.date || '',
+          start: s.start || '',
+          end: s.end || '',
+          entries: s.tasks ? [{
+            assignee: s.name || '',
+            time: s.start || '',
+            duration: s.end ? parseInt(getDuration(s.start || '09:00', s.end || '10:00').replace(/[^0-9]/g, '')) || 60 : 60,
+            task: s.tasks,
+            status: 'pending' as const,
+            recurrence: 'none' as const
+          }] : [],
+          version: '1.0',
+          recurrence: 'none' as const
+        }))
       } else {
         /**
          * Fallback for unknown data formats - prevents crashes from malformed state
@@ -233,10 +304,10 @@ function App() {
          */
         console.log('🔍 App - safeSchedules[0]:', firstSchedule)
         console.log('🔍 App - safeSchedules[0] keys:', Object.keys(firstSchedule))
-        console.log('🔍 App - safeSchedules[0].name:', firstSchedule.name, 'type:', typeof firstSchedule.name, 'trimmed:', firstSchedule.name?.trim())
+        console.log('🔍 App - safeSchedules[0].title:', firstSchedule.title, 'type:', typeof firstSchedule.title, 'trimmed:', firstSchedule.title?.trim())
         console.log('🔍 App - safeSchedules[0].start:', firstSchedule.start)
         console.log('🔍 App - safeSchedules[0].date:', firstSchedule.date)
-        console.log('🔍 App - safeSchedules[0].tasks:', firstSchedule.tasks)
+        console.log('🔍 App - safeSchedules[0].description:', firstSchedule.description)
         console.log('🔍 App - safeSchedules[0].entries:', firstSchedule.entries)
         console.log('🔍 App - safeSchedules[0] stringified length:', JSON.stringify(firstSchedule).length)
       }
@@ -326,8 +397,39 @@ function App() {
           </div>
         )}
 
-        {/* Action Buttons - only show when not in form mode */}
-        {!showForm && (
+        {/* Main Content */}
+        {!showForm && viewMode === 'dashboard' && (
+          <ErrorBoundary>
+            <Dashboard
+              onEdit={handleEditSchedule}
+              onDelete={handleDeleteSchedule}
+              onView={handleViewSchedule}
+            />
+          </ErrorBoundary>
+        )}
+
+        {!showForm && viewMode === 'view' && selectedSchedule && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <Button variant="outline" onClick={handleBackToDashboard}>
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Back to Dashboard
+              </Button>
+              <h2 className="text-2xl font-bold">{selectedSchedule.title}</h2>
+            </div>
+            <ErrorBoundary>
+              <ScheduleTable
+                schedules={[selectedSchedule]}
+                onEdit={handleEditSchedule}
+                onDelete={handleDeleteSchedule}
+                onAddSchedule={handleAddClick}
+              />
+            </ErrorBoundary>
+          </div>
+        )}
+
+        {/* Action Buttons - show in view mode */}
+        {!showForm && viewMode === 'view' && (
           <Card className="no-print">
             <CardContent className="p-6">
               <ActionBar
@@ -342,23 +444,11 @@ function App() {
 
         {/* Import Section */}
         <ImportSection onImport={handleImport} />
-
-        {/* Schedule Table - Screen View */}
-        <div className="no-print">
-          <ErrorBoundary>
-            <ScheduleTable
-              schedules={schedules}
-              onEdit={handleEditSchedule}
-              onDelete={handleDeleteSchedule}
-              onAddSchedule={handleAddClick}
-            />
-          </ErrorBoundary>
-        </div>
       
         {/* Print Schedule - Always rendered but hidden on screen */}
         <PrintSchedule
           className="hidden print:block"
-          schedules={schedules}
+          schedules={viewMode === 'view' && selectedSchedule ? [selectedSchedule] : schedules}
           companyName="Housekeeper Services"
           printedAt={new Date()}
         />

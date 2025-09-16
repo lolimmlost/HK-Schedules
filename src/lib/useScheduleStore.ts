@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
-import type { Schedule } from '@/components/schedule-form'
+import type { Schedule, Entry } from '@/components/schedule-form'
+import { v4 as uuidv4 } from 'uuid'
+import { getDuration } from './utils'
 
 interface ScheduleStore {
   schedules: Schedule[]
@@ -18,7 +20,26 @@ export function useScheduleStore(): ScheduleStore {
     try {
       const parsed = saved ? JSON.parse(saved) : []
       console.log('🔍 useScheduleStore - parsed schedules:', parsed.length, 'items')
-      return parsed
+
+      // Migration check for v1 data
+      if (parsed.length > 0 && isLegacyData(parsed[0])) {
+        if (confirm('Detected legacy v1 data. Migrate to v2 format? This will convert single-entry schedules to multi-entry format. Backup will be created.')) {
+          const backup = JSON.stringify(parsed, null, 2)
+          localStorage.setItem('housekeeperSchedules_backup_v1', backup)
+          console.log('🔍 useScheduleStore - v1 backup created')
+
+          const migrated = migrateV1ToV2(parsed as any[])
+          localStorage.setItem('housekeeperSchedules', JSON.stringify(migrated))
+          console.log('🔍 useScheduleStore - migrated to v2:', migrated.length, 'schedules')
+          return migrated
+        } else {
+          console.log('🔍 useScheduleStore - migration skipped, using legacy data')
+          // Cast to Schedule for compatibility, but display warning
+          return parsed as Schedule[]
+        }
+      }
+
+      return parsed as Schedule[]
     } catch (error) {
       console.error('🔍 useScheduleStore - JSON.parse error:', error)
       localStorage.removeItem('housekeeperSchedules')
@@ -76,4 +97,34 @@ export function useScheduleStore(): ScheduleStore {
     getSchedules,
     setSchedules: setSchedulesDirect
   }
+}
+
+// Migration utilities
+export function isLegacyData(data: any): boolean {
+  return !('version' in data) || data.version === '1.0' || ('name' in data && !('entries' in data))
+}
+
+export function migrateV1ToV2(legacySchedules: any[]): Schedule[] {
+  return legacySchedules.map((legacy, index) => {
+    const entry: Entry = {
+      id: uuidv4(),
+      time: legacy.start || '09:00',
+      duration: legacy.end ? parseInt(getDuration(legacy.start || '09:00', legacy.end || '10:00').replace(/[^0-9]/g, '')) || 60 : 60,
+      task: legacy.tasks || 'General task',
+      assignee: legacy.name || 'Unassigned',
+      status: 'pending',
+      recurrence: 'none'
+    }
+
+    return {
+      id: legacy.id || `migrated-${index}`,
+      title: legacy.name || 'Migrated Schedule',
+      description: legacy.tasks || 'Migrated from v1',
+      category: 'general',
+      date: legacy.date || '',
+      entries: [entry],
+      version: '2.0',
+      recurrence: 'none'
+    } as Schedule
+  })
 }

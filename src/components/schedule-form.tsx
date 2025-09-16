@@ -1,3 +1,4 @@
+// Dynamic Schedule Form with react-hook-form, Zod validation, and entry arrays
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -5,145 +6,114 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { User, Calendar, Clock, List, Plus } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { User, Calendar, Clock, List, Plus, Trash2, PlusCircle } from "lucide-react"
 
 import { getDuration } from "@/lib/utils"
+import { useForm, useFieldArray } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { v4 as uuidv4 } from "uuid"
 
 export interface Entry {
   id: string
   time: string
-  duration: string
-  tasks: string
+  duration: number // minutes
+  task: string
   assignee: string
-  status?: 'pending' | 'completed'
+  status: 'pending' | 'completed'
+  notes?: string
+  recurrence?: 'none' | 'daily' | 'weekly' | 'monthly'
 }
 
-export interface Schedule {
-  id: string
-  name: string
-  date?: string
-  start?: string
-  end?: string
-  entries?: Entry[]
-  tasks?: string // Legacy support
-}
+const entrySchema = z.object({
+  id: z.string().uuid(),
+  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
+  duration: z.number().min(1, "Duration must be at least 1 minute").max(480, "Duration max 8 hours"),
+  task: z.string().min(1, "Task required").max(200, "Task max 200 chars"),
+  assignee: z.string().min(1, "Assignee required"),
+  status: z.enum(['pending', 'completed']).default('pending'),
+  notes: z.string().max(300, "Notes max 300 chars").optional(),
+  recurrence: z.enum(['none', 'daily', 'weekly', 'monthly']).default('none'),
+})
+
+const scheduleSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string().min(1, "Title required").max(100, "Title max 100 chars"),
+  description: z.string().max(500, "Description max 500 chars").optional(),
+  category: z.enum(['general', 'housekeeping', 'maintenance', 'other']).default('general'),
+  date: z.string().optional(),
+  entries: z.array(entrySchema).min(1, "At least one entry required"),
+  version: z.string().default('2.0'),
+  recurrence: z.enum(['none', 'daily', 'weekly', 'monthly']).default('none'),
+}).refine((data) => {
+  // No time overlaps
+  const times = data.entries.map(e => e.time)
+  const uniqueTimes = new Set(times)
+  return times.length === uniqueTimes.size
+}, {
+  message: "Entry times must be unique (no overlaps)",
+  path: ['entries']
+})
+
+export type Schedule = z.infer<typeof scheduleSchema>
 
 interface ScheduleFormProps {
-  initialData?: Schedule
+  initialData?: Partial<Schedule>
   onSubmit: (data: Schedule) => void
   onCancel?: () => void
 }
 
-interface FormErrors {
-  name?: string
-  start?: string
-  end?: string
-  tasks?: string
-}
-
 export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormProps) {
-  const [formData, setFormData] = React.useState({
-    name: initialData?.name || "",
-    date: initialData?.date || "",
-    start: initialData?.start || "",
-    end: initialData?.end || "",
-    tasks: initialData?.tasks || "",
-  })
-  const [errors, setErrors] = React.useState<FormErrors>({})
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [isEditing, setIsEditing] = React.useState(!!initialData)
+  const isEditing = !!initialData?.id
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {}
-
-    // Name validation
-    if (!formData.name.trim()) {
-      newErrors.name = "Housekeeper name is required"
-    } else if (formData.name.trim().length < 2) {
-      newErrors.name = "Name must be at least 2 characters"
-    }
-
-    // Start time validation
-    if (!formData.start) {
-      newErrors.start = "Start time is required"
-    }
-
-    // End time validation
-    if (!formData.end) {
-      newErrors.end = "End time is required"
-    } else if (formData.start && formData.end) {
-      const duration = getDuration(formData.start, formData.end)
-      if (duration === "0m") {
-        newErrors.end = "End time must be after start time"
-      }
-    }
-
-    // Tasks validation (optional but helpful)
-    if (formData.tasks.trim().length > 500) {
-      newErrors.tasks = "Tasks description must be less than 500 characters"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!validateForm()) {
-      return
-    }
-
-    setIsSubmitting(true)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    const data: Schedule = {
-      id: initialData?.id || Date.now().toString(),
-      ...formData,
-    }
-    
-    onSubmit(data)
-    
-    setIsSubmitting(false)
-    setErrors({})
-    setFormData({
-      name: "",
-      date: "",
-      start: "",
-      end: "",
-      tasks: "",
-    })
-    setIsEditing(false)
-  }
-
-  const handleCancel = () => {
-    setErrors({})
-    setFormData({
-      name: initialData?.name || "",
+  const form = useForm<Schedule>({
+    resolver: zodResolver(scheduleSchema),
+    defaultValues: {
+      id: initialData?.id || uuidv4(),
+      title: initialData?.title || "",
+      description: initialData?.description || "",
+      category: (initialData?.category as any) || 'general',
       date: initialData?.date || "",
-      start: initialData?.start || "",
-      end: initialData?.end || "",
-      tasks: initialData?.tasks || "",
-    })
-    setIsEditing(!!initialData)
-    if (onCancel) onCancel()
-  }
+      entries: initialData?.entries?.length ? initialData.entries : [{ id: uuidv4() }],
+      version: '2.0',
+      recurrence: (initialData?.recurrence as any) || 'none',
+    },
+  })
 
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    
-    // Clear error when user starts typing
-    if (errors[field as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }))
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "entries",
+  })
+
+  const onSubmitForm = (data: Schedule) => {
+    // Convert duration string to number if needed
+    const processedData = {
+      ...data,
+      entries: data.entries.map(entry => ({
+        ...entry,
+        duration: typeof entry.duration === 'string' ? parseInt(entry.duration) : entry.duration,
+      })),
     }
+    onSubmit(processedData)
+    form.reset()
   }
 
-  const hasErrors = Object.keys(errors).length > 0
+  const addEntry = () => {
+    append({ id: uuidv4(), time: '', duration: 60, task: '', assignee: '', status: 'pending', recurrence: 'none' })
+  }
+
+  const watchEntries = form.watch('entries')
+  const hasEntries = watchEntries.length > 0
+
+  React.useEffect(() => {
+    if (isEditing && initialData) {
+      form.reset(initialData)
+    }
+  }, [initialData, isEditing, form])
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full max-w-4xl">
       <CardHeader className="space-y-1">
         <div className="flex items-center gap-2">
           {isEditing ? (
@@ -158,127 +128,213 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
         <p className="text-sm text-muted-foreground">
           {isEditing 
             ? "Update the schedule details below" 
-            : "Fill in the details to create a new housekeeper schedule"
+            : "Fill in the details to create a new schedule with multiple entries"
           }
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {hasErrors && (
-          <Alert className="border-destructive bg-destructive/10">
-            <List className="h-4 w-4" />
-            <AlertDescription className="text-destructive">
-              Please fix the errors below to continue.
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Name Field */}
-          <div className="space-y-2">
-            <Label htmlFor="name" className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              Housekeeper Name <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="name"
-              required
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              className={errors.name ? "border-destructive" : ""}
-              placeholder="Enter housekeeper name"
-            />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name}</p>
-            )}
-          </div>
-
-          {/* Date Field */}
-          <div className="space-y-2">
-            <Label htmlFor="date" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              Date
-            </Label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) => handleInputChange('date', e.target.value)}
-              className="w-full max-w-sm"
-            />
-          </div>
-
-          {/* Time Fields */}
+        <form onSubmit={form.handleSubmit(onSubmitForm)} className="space-y-6">
+          {/* Schedule Level Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="start" className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                Start Time <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="start"
-                type="time"
-                required
-                value={formData.start}
-                onChange={(e) => handleInputChange('start', e.target.value)}
-                className={errors.start ? "border-destructive" : ""}
-              />
-              {errors.start && (
-                <p className="text-sm text-destructive">{errors.start}</p>
-              )}
+              <Label htmlFor="title">Schedule Title <span className="text-destructive">*</span></Label>
+              <Input id="title" {...form.register("title")} className={form.formState.errors.title ? "border-destructive" : ""} />
+              {form.formState.errors.title && <p className="text-sm text-destructive">{form.formState.errors.title.message}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="end" className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                End Time <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="end"
-                type="time"
-                required
-                value={formData.end}
-                onChange={(e) => handleInputChange('end', e.target.value)}
-                className={errors.end ? "border-destructive" : ""}
-              />
-              {errors.end && (
-                <p className="text-sm text-destructive">{errors.end}</p>
-              )}
+              <Label htmlFor="category">Category</Label>
+              <Select onValueChange={(value) => form.setValue("category", value as any)} defaultValue={form.watch("category")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="housekeeping">Housekeeping</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          {/* Tasks Field */}
           <div className="space-y-2">
-            <Label htmlFor="tasks" className="flex items-center gap-2">
-              <List className="h-4 w-4 text-muted-foreground" />
-              Tasks
-            </Label>
-            <Textarea
-              id="tasks"
-              value={formData.tasks}
-              onChange={(e) => handleInputChange('tasks', e.target.value)}
-              className={errors.tasks ? "border-destructive" : ""}
-              placeholder="Enter tasks for this schedule (vacuum, dust, clean kitchen, etc.)"
-              rows={4}
+            <Label htmlFor="description">Description</Label>
+            <Textarea 
+              id="description" 
+              {...form.register("description")} 
+              className={form.formState.errors.description ? "border-destructive" : ""} 
+              placeholder="Optional description for the schedule"
+              rows={3}
             />
-            {errors.tasks && (
-              <p className="text-sm text-destructive">{errors.tasks}</p>
+            {form.formState.errors.description && <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>}
+            <p className="text-xs text-muted-foreground">{form.watch("description")?.length || 0}/500 characters</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="date">
+              <Calendar className="h-4 w-4 inline mr-2" />
+              Date (Optional)
+            </Label>
+            <Input id="date" type="date" {...form.register("date")} />
+          </div>
+
+          {/* Dynamic Entries */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-lg font-semibold">Schedule Entries <span className="text-destructive">*</span></Label>
+              <Button type="button" variant="outline" onClick={addEntry} size="sm">
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Entry
+              </Button>
+            </div>
+
+            {form.formState.errors.entries && (
+              <Alert className="border-destructive bg-destructive/10">
+                <List className="h-4 w-4" />
+                <AlertDescription className="text-destructive">
+                  {form.formState.errors.entries.message}
+                </AlertDescription>
+              </Alert>
             )}
-            <p className="text-xs text-muted-foreground">
-              {formData.tasks.length}/500 characters
-            </p>
+
+            <div className="space-y-4">
+              {fields.map((field, index) => (
+                <div key={field.id} className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">Entry {index + 1}</h4>
+                    {fields.length > 1 && (
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => remove(index)}
+                        className="text-destructive hover:text-destructive/80"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Time <span className="text-destructive">*</span></Label>
+                      <Input 
+                        type="time" 
+                        {...form.register(`entries.${index}.time` as const)} 
+                        className={form.formState.errors.entries?.[index]?.time ? "border-destructive" : ""}
+                      />
+                      {form.formState.errors.entries?.[index]?.time && (
+                        <p className="text-sm text-destructive">{form.formState.errors.entries[index]?.time?.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Duration (minutes) <span className="text-destructive">*</span></Label>
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        max="480"
+                        {...form.register(`entries.${index}.duration`, { valueAsNumber: true })} 
+                        className={form.formState.errors.entries?.[index]?.duration ? "border-destructive" : ""}
+                      />
+                      {form.formState.errors.entries?.[index]?.duration && (
+                        <p className="text-sm text-destructive">{form.formState.errors.entries[index]?.duration?.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Assignee <span className="text-destructive">*</span></Label>
+                      <Input 
+                        {...form.register(`entries.${index}.assignee` as const)} 
+                        className={form.formState.errors.entries?.[index]?.assignee ? "border-destructive" : ""}
+                        placeholder="e.g., John Doe"
+                      />
+                      {form.formState.errors.entries?.[index]?.assignee && (
+                        <p className="text-sm text-destructive">{form.formState.errors.entries[index]?.assignee?.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Task <span className="text-destructive">*</span></Label>
+                      <Input 
+                        {...form.register(`entries.${index}.task` as const)} 
+                        className={form.formState.errors.entries?.[index]?.task ? "border-destructive" : ""}
+                        placeholder="e.g., Clean Room 101"
+                      />
+                      {form.formState.errors.entries?.[index]?.task && (
+                        <p className="text-sm text-destructive">{form.formState.errors.entries[index]?.task?.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Status</Label>
+                      <Select onValueChange={(value) => form.setValue(`entries.${index}.status` as const, value as any)} defaultValue={form.watch(`entries.${index}.status`) || 'pending'}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Recurrence</Label>
+                      <Select onValueChange={(value) => form.setValue(`entries.${index}.recurrence` as const, value as any)} defaultValue={form.watch(`entries.${index}.recurrence`) || 'none'}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select recurrence" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="daily">Daily</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Notes</Label>
+                      <Textarea 
+                        {...form.register(`entries.${index}.notes` as const)} 
+                        className={form.formState.errors.entries?.[index]?.notes ? "border-destructive" : ""}
+                        placeholder="Optional notes for this entry"
+                        rows={2}
+                      />
+                      {form.formState.errors.entries?.[index]?.notes && (
+                        <p className="text-sm text-destructive">{form.formState.errors.entries[index]?.notes?.message}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {!hasEntries && (
+                <Alert>
+                  <Plus className="h-4 w-4" />
+                  <AlertDescription>No entries yet. Click "Add Entry" to start.</AlertDescription>
+                </Alert>
+              )}
+            </div>
           </div>
 
           {/* Form Actions */}
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <Button 
               type="submit" 
-              className="flex-1 bg-primary hover:bg-primary/90"
-              disabled={isSubmitting || hasErrors}
+              className="flex-1" 
+              disabled={form.formState.isSubmitting || !form.formState.isValid || !hasEntries}
             >
-              {isSubmitting ? (
+              {form.formState.isSubmitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  {isEditing ? "Updating..." : "Adding..."}
+                  {isEditing ? "Updating..." : "Creating..."}
                 </>
               ) : (
                 <>
@@ -290,7 +346,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
                   ) : (
                     <>
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Schedule
+                      Create Schedule
                     </>
                   )}
                 </>
@@ -301,11 +357,9 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleCancel}
-                className="flex-1 sm:w-auto"
-                disabled={isSubmitting}
+                onClick={onCancel}
+                disabled={form.formState.isSubmitting}
               >
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2 hidden" />
                 Cancel
               </Button>
             )}
