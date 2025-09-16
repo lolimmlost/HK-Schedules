@@ -21,9 +21,10 @@ interface ScheduleTableProps {
   schedules: Schedule[] | { schedules: Schedule[] } | null
   onEdit: (schedule: Schedule) => void
   onDelete: (id: string) => void
+  onAddSchedule?: () => void
 }
 
-export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProps) {
+export function ScheduleTable({ schedules, onEdit, onDelete, onAddSchedule }: ScheduleTableProps) {
   // Ensure schedules is always an array - handle both array and storage object formats
   const safeSchedules: Schedule[] = Array.isArray(schedules) ? schedules : (schedules?.schedules || [])
   
@@ -90,106 +91,122 @@ export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProp
     assigneeCount
   } = useScheduleFilter(migratedSchedules, selectedAssignee)
 
-
-  const handleDelete = async (id: string) => {
-    if (deletingId === id) return // Already deleting
-
-    if (!confirm('Are you sure you want to delete this schedule? This action cannot be undone.')) {
-      return
-    }
-
-    setDeletingId(id)
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    onDelete(id)
-    setDeletingId(null)
-  }
-
-
-
-  const sortedSchedules = React.useMemo(() => {
-    if (!isSorted) return filteredSchedules
-
-    return [...filteredSchedules].sort((a, b) => {
-      let aValue, bValue
-
-      switch (isSorted) {
-        case 'name':
-          aValue = a.name.toLowerCase()
-          bValue = b.name.toLowerCase()
-          break
-        case 'date':
-          aValue = a.date || ''
-          bValue = b.date || ''
-          break
-        case 'start':
-          // Use first entry time or legacy start time
-          aValue = a.entries?.[0]?.time || a.start || ''
-          bValue = b.entries?.[0]?.time || b.start || ''
-          break
-        default:
-          return 0
-      }
-
-      if (aValue == null || bValue == null) return 0
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
-      return 0
-    })
-  }, [filteredSchedules, isSorted, sortDirection])
-
-  const toggleSort = (column: 'name' | 'date' | 'start') => {
-    if (isSorted === column) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
-    } else {
-      setIsSorted(column)
-      setSortDirection('asc')
-    }
-  }
-
-  const toggleExpand = (scheduleId: string) => {
-    setExpandedSchedules(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(scheduleId)) {
-        newSet.delete(scheduleId)
-      } else {
-        newSet.add(scheduleId)
-      }
-      return newSet
-    })
-  }
-
   const isSmallScreen = window.innerWidth < 768
   console.log('🔍 ScheduleTable render debug - isSmallScreen:', isSmallScreen, 'schedules.length:', safeSchedules.length, 'window.innerWidth:', window.innerWidth)
 
   if (safeSchedules.length === 0) {
     console.log('🔍 ScheduleTable: Rendering empty state')
     return (
-      <Card>
-        <CardHeader className="flex flex-col items-center justify-center space-y-2 text-center">
-          <User className="h-12 w-12 text-muted-foreground" />
+      <Card className="max-w-md mx-auto">
+        <CardHeader className="flex flex-col items-center justify-center space-y-2 text-center p-8">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <User className="h-8 w-8 text-primary" />
+          </div>
           <CardTitle className="text-xl">No Schedules Yet</CardTitle>
-          <p className="text-muted-foreground">
-            Get started by adding your first housekeeper schedule.
+          <p className="text-muted-foreground text-sm max-w-sm">
+            Get started by adding your first housekeeper schedule. You can create schedules for different days and assign tasks to your team.
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6 pb-8">
           <div className="flex justify-center">
-            <Button variant="outline" size="lg" className="w-full max-w-sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add First Schedule
-            </Button>
+            {onAddSchedule ? (
+              <Button
+                onClick={onAddSchedule}
+                size="lg"
+                className="w-full max-w-sm bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add First Schedule
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full max-w-sm"
+                disabled
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add First Schedule
+              </Button>
+            )}
           </div>
+          <p className="text-xs text-muted-foreground text-center mt-4">
+            Or use the action bar above to get started
+          </p>
         </CardContent>
       </Card>
     )
   }
+const handleDelete = async (id: string) => {
+  if (deletingId === id) return // Already deleting
 
-  console.log('🔍 ScheduleTable: About to render table with', safeSchedules.length, 'schedules, isSmallScreen:', isSmallScreen)
-  console.log('🔍 ScheduleTable: sortedSchedules:', sortedSchedules)
+  if (!confirm('Are you sure you want to delete this schedule? This action cannot be undone.')) {
+    return
+  }
 
+  setDeletingId(id)
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800))
+  
+  onDelete(id)
+  setDeletingId(null)
+}
+
+const sortedSchedules = React.useMemo(() => {
+  if (!isSorted) return filteredSchedules
+
+  return [...filteredSchedules].sort((a, b) => {
+    let aValue, bValue
+
+    switch (isSorted) {
+      case 'name':
+        aValue = a.name.toLowerCase()
+        bValue = b.name.toLowerCase()
+        break
+      case 'date':
+        aValue = a.date || ''
+        bValue = b.date || ''
+        break
+      case 'start':
+        // Use first entry time or legacy start time
+        aValue = a.entries?.[0]?.time || a.start || ''
+        bValue = b.entries?.[0]?.time || b.start || ''
+        break
+      default:
+        return 0
+    }
+
+    if (aValue == null || bValue == null) return 0
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+    return 0
+  })
+}, [filteredSchedules, isSorted, sortDirection])
+
+const toggleSort = (column: 'name' | 'date' | 'start') => {
+  if (isSorted === column) {
+    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+  } else {
+    setIsSorted(column)
+    setSortDirection('asc')
+  }
+}
+
+const toggleExpand = (scheduleId: string) => {
+  setExpandedSchedules(prev => {
+    const newSet = new Set(prev)
+    if (newSet.has(scheduleId)) {
+      newSet.delete(scheduleId)
+    } else {
+      newSet.add(scheduleId)
+    }
+    return newSet
+  })
+}
+
+console.log('🔍 ScheduleTable: About to render table with', safeSchedules.length, 'schedules, isSmallScreen:', isSmallScreen)
+console.log('🔍 ScheduleTable: sortedSchedules:', sortedSchedules)
   return (
     <Card className="w-full">
       <CardHeader className="pb-4">

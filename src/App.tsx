@@ -316,6 +316,7 @@ function App() {
             schedules={schedules}
             onEdit={handleEditSchedule}
             onDelete={handleDeleteSchedule}
+            onAddSchedule={handleAddClick}
           />
         </div>
       

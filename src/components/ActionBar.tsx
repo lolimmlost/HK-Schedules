@@ -21,10 +21,9 @@ export function ActionBar({
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
       <div className="flex-1">
-        <Button 
-          onClick={onAddSchedule} 
+        <Button
+          onClick={onAddSchedule}
           className="w-full sm:w-auto bg-primary hover:bg-primary/90 flex items-center gap-2"
-          disabled={scheduleCount === 0}
         >
           <Plus className="h-4 w-4" />
           Add New Schedule
@@ -40,9 +39,9 @@ export function ActionBar({
           <Printer className="h-4 w-4" />
           Print Schedule
         </Button>
-        <Button 
-          onClick={onExport} 
-          variant="outline" 
+        <Button
+          onClick={onExport}
+          variant="outline"
           className="no-print flex items-center gap-2"
           disabled={scheduleCount === 0}
         >
