@@ -100,8 +100,14 @@ export function Dashboard({ onEdit, onDelete, onView, onAddSchedule }: Dashboard
           <Users className="h-6 w-6 text-primary" />
           <h1 className="text-3xl font-bold">Schedules Dashboard</h1>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>{filteredSchedules.length} of {allSchedules.length} schedules</span>
+        <div className="flex items-center gap-2">
+          <Button onClick={onAddSchedule} className="no-print">
+            <Plus className="h-4 w-4 mr-2" />
+            Add New Schedule
+          </Button>
+          <div className="text-sm text-muted-foreground">
+            <span>{filteredSchedules.length} of {allSchedules.length} schedules</span>
+          </div>
         </div>
       </div>
 
