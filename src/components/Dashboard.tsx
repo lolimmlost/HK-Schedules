@@ -103,7 +103,7 @@ export function Dashboard({ onEdit, onDelete, onView, onAddSchedule }: Dashboard
           <h1 className="text-3xl font-bold">Schedules Dashboard</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => exportToCSV(allSchedules)} className="no-print">
+          <Button onClick={() => { const result = exportToCSV(allSchedules); if (!result.success) console.error('Export failed:', result.error); }} className="no-print">
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>
