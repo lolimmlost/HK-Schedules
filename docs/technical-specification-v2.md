@@ -1,16 +1,20 @@
 
+---
+title: HK-Schedules v2 Technical Specification
+version: 2.0.0
+date: 2025-09-16
+status: Approved
+author: Technical Lead
+references:
+  - [Architecture Handoff v2](specs/architecture-handoff-v2.md)
+  - [PRD v2](PRD/v2/index.md)
+  - [Dependency Integration Plan](specs/dependency-integration-plan.md)
+---
+
 # HK-Schedules v2 Technical Specification
-**Version**: 2.0.0  
-**Date**: September 2025  
-**Epic**: BE-001 Multi-Schedule Management and Team Collaboration Enhancement
-**PRD Reference**: [docs/PRD/v2/](../PRD/v2/) (Brownfield extension of [v1 PRD](../PRD/v1/))
-**Compatibility**: 100% backward compatible with v1.0  
-**Implementation Effort**: 4-6 weeks (2 sprints)  
-**Team**: 1 Full-Stack Developer (80%), QA (20%)  
 
-## 🎯 Implementation Overview
-
-This technical specification provides detailed implementation guidance for extending the existing HK-Schedules v1.0 application to support multi-schedule management, team collaboration, and shareable exports. The approach follows brownfield principles: 80% code reuse, incremental layering, automatic v1→v2 migration, and local-first architecture.
+## Executive Summary
+This technical specification provides detailed implementation guidance for extending the existing HK-Schedules v1.0 application to support multi-schedule management, team collaboration, and shareable exports. The approach follows brownfield principles: 80% code reuse, incremental layering, automatic v1→v2 migration, and local-first architecture. Key phases: Sprint 1 (infrastructure), Sprint 2 (UI), Week 5 (testing), Week 6 (deployment). Success criteria: 95% coverage, <1s loads, 100% migration. See [Architecture Handoff v2](specs/architecture-handoff-v2.md) for roadmap and [Dependency Integration Plan](specs/dependency-integration-plan.md) for packages.
 
 ### Key Implementation Phases
 1. **Sprint 1 (Weeks 1-2)**: Core infrastructure (store, routing, data model, migration)

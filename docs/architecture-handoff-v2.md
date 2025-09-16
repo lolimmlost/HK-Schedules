@@ -1,5 +1,19 @@
+---
+title: HK-Schedules v2 Architecture Handoff Document
+version: 2.0.0
+date: 2025-09-16
+status: Approved
+author: Lead Architect (Sonoma)
+references:
+  - [Technical Specification v2](specs/technical-specification-v2.md)
+  - [PRD v2](PRD/v2/index.md)
+  - [Dependency Integration Plan](specs/dependency-integration-plan.md)
+---
 
 # HK-Schedules v2 Architecture Handoff Document
+
+## Executive Summary
+The HK-Schedules v2 architecture transforms the existing v1.0 single-schedule housekeeper management application into a scalable multi-schedule team collaboration platform while maintaining 100% backward compatibility. This brownfield evolution follows core principles from [PRD v1](archive/PRD/v1/) and [PRD v2](PRD/v2/): incremental enhancement, local-first, modular state, PWA experience, performance-first, zero data loss, team-ready. Key decisions include Zustand for state, enhanced localStorage with migration, React Router for SPA, React Hook Form + Zod for validation, secure sharing with PINs. Implementation impact: +124KB bundle (209KB total), +60% codebase, <1s loads. See [Technical Specification v2](specs/technical-specification-v2.md) for code details.
 
 **Version**: 2.0.0  
 **Date**: September 2025  
@@ -392,4 +406,43 @@ const useStore = create((set, get) => ({
 class StoreErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Store error boundary caught:', error, errorInfo);
+    // Log to monitoring service if available
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="error-boundary">
+          <h2>Something went wrong with the schedule data.</h2>
+          <p>{this.state.error?.message || 'Unknown error'}</p>
+          <button onClick={() => this.setState({ hasError: false, error: null })}>
+            Try Again
+          </button>
+          <button onClick={() => useStore.getState().recoverFromError(this.state.error?.message || 'UNKNOWN')}>
+            Recover Data
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Usage: Wrap store-dependent components
+const AppWithErrorBoundary = () => (
+  <StoreErrorBoundary>
+    <AppRoutes />
+  </StoreErrorBoundary>
+);
+
+export default AppWithErrorBoundary;

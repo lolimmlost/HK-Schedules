@@ -1,4 +1,18 @@
+---
+title: US-002 Enhanced Schedule Viewing and Filtering Backlog
+version: 1.1
+date: 2025-09-16
+status: Approved
+author: Scrum Master
+references:
+  - [PRD v2](PRD/v2/index.md)
+  - [Risks Appendix](PRD/v2/risks-timeline-appendix.md)
+---
+
 # US-002 Enhanced Schedule Viewing and Filtering Backlog
+
+## Executive Summary
+This backlog tracks implementation progress for enhanced viewing and filtering features in HK-Schedules v2. Current status: Core assignee filtering complete; remaining tasks focus on US-001 dependencies (dynamic forms, dashboard) and US-003 integration. See [Risks Appendix](PRD/v2/risks-timeline-appendix.md) for migration/performance considerations.
 
 ## Current Status
 - ✅ Data model updated with Entry interface and optional entries array
@@ -6,7 +20,10 @@
 - ✅ Display-only migration logic in schedule-table.tsx (safe, non-destructive)
 - ✅ App stable - schedules display and add/edit work normally
 - ✅ Assignee filtering implemented with dropdown and visual feedback
+- ✅ US-002 Core: Assignee filtering complete (dropdown, row highlighting, count badges)
 - ⚠️ US-001 Partial: Single-entry form exists but lacks dynamic entries array, full fields (title, category, recurrence), advanced validation (Zod, overlaps); no dashboard for multi-schedules
+- ⚠️ US-003: Housekeeping mode planned; low-tech UX guidelines in PRD v2, but implementation pending
+- 📋 See [Risks Timeline Appendix](risks-timeline-appendix.md) for migration/performance risks
 
 ## Remaining Tasks (US-001 Dependencies)
 - [ ] US-001: Implement dynamic entries array in ScheduleForm.tsx (add/remove rows for time/task/assignee/etc.)

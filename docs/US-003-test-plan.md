@@ -1,4 +1,18 @@
+---
+title: US-003 Housekeeping Schedule Management Test Plan
+version: 1.0
+date: 2025-09-16
+status: Approved
+author: Test Architect & Quality Advisor
+references:
+  - [US-002 Backlog](backlogs/US-002-backlog.md)
+  - [PRD v2 Functional Requirements](PRD/v2/functional-requirements.md)
+---
+
 # US-003 Housekeeping Schedule Management Test Plan
+
+## Executive Summary
+This test plan covers the new housekeeping use case for Rick, focusing on simplicity, reliability, and scalability for low-tech-savvy users managing 130+ units across 5+ housekeepers. Tests validate functional requirements from [PRD v2 FR-5](PRD/v2/functional-requirements.md#315-housekeeping-schedule-management-fr-5-us-003), UI/UX guidelines from [UI/UX v2 5.2](PRD/v2/ui-ux-design.md#52-housekeeping-specific-uiux-us-003-extensions), and acceptance criteria from [US-002-backlog.md US-003 section](backlogs/US-002-backlog.md#us-003-housekeeping-schedule-management-for-rick-new-use-case).
 
 ## Overview
 This test plan covers the new housekeeping use case for Rick, focusing on simplicity, reliability, and scalability for low-tech-savvy users managing 130+ units across 5+ housekeepers. Tests validate functional requirements from [PRD v2 FR-5](PRD/v2/functional-requirements.md#315-housekeeping-schedule-management-fr-5-us-003), UI/UX guidelines from [UI/UX v2 5.2](PRD/v2/ui-ux-design.md#52-housekeeping-specific-uiux-us-003-extensions), and acceptance criteria from [US-002-backlog.md US-003 section](US-002-backlog.md#us-003-housekeeping-schedule-management-for-rick-new-use-case).
@@ -135,6 +149,13 @@ This test plan covers the new housekeeping use case for Rick, focusing on simpli
 - **Coverage Goals**: 85% unit tests; 100% AC coverage; Lighthouse score >90 (accessibility/performance)
 - **Success Metrics**: 95% test pass rate; usability tasks 90% success; performance benchmarks met
 - **Defect Tracking**: Log in issues.md or GitHub; prioritize by risk (large data + low-tech impact highest)
+
+## References & Next Steps
+- Implement test cases in src/lib/__tests__/.
+- Conduct usability sessions with target personas.
+- Performance optimization based on benchmarks.
+- Accessibility audit before release.
+- Update test plan based on implementation feedback.
 
 ## Next Steps
 - Implement test cases in src/lib/__tests__/
