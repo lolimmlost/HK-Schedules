@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Filter, Edit3, Trash2, Eye, Calendar, Clock, Users, Plus } from "lucide-react"
+import { Search, Filter, Edit3, Trash2, Eye, Calendar, Clock, Users, Plus, Download } from "lucide-react"
 import { useScheduleStore } from "@/lib/useScheduleStore"
 import { Schedule } from "./schedule-form"
 import { formatDate } from "@/lib/utils"
+import { useCSVExport } from "@/lib/useCSVExport"
 
 interface DashboardProps {
   onEdit: (schedule: Schedule) => void
@@ -19,6 +20,7 @@ interface DashboardProps {
 export function Dashboard({ onEdit, onDelete, onView, onAddSchedule }: DashboardProps) {
   const { schedules, getSchedules } = useScheduleStore()
   const allSchedules = getSchedules()
+  const exportToCSV = useCSVExport()
 
   const [searchTerm, setSearchTerm] = useState("")
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
@@ -101,6 +103,10 @@ export function Dashboard({ onEdit, onDelete, onView, onAddSchedule }: Dashboard
           <h1 className="text-3xl font-bold">Schedules Dashboard</h1>
         </div>
         <div className="flex items-center gap-2">
+          <Button onClick={() => exportToCSV(allSchedules)} className="no-print">
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
           <Button onClick={onAddSchedule} className="no-print">
             <Plus className="h-4 w-4 mr-2" />
             Add New Schedule
