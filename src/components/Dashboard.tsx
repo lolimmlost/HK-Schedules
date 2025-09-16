@@ -1,4 +1,4 @@
-import * as React from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,7 +8,6 @@ import { Search, Filter, Edit3, Trash2, Eye, Calendar, Clock, Users, Plus } from
 import { useScheduleStore } from "@/lib/useScheduleStore"
 import { Schedule } from "./schedule-form"
 import { formatDate } from "@/lib/utils"
-import { useState } from "react"
 
 interface DashboardProps {
   onEdit: (schedule: Schedule) => void
@@ -21,22 +20,38 @@ export function Dashboard({ onEdit, onDelete, onView }: DashboardProps) {
   const allSchedules = getSchedules()
 
   const [searchTerm, setSearchTerm] = useState("")
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [dateFilter, setDateFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 20
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 300)
+    
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
   // Derived state for filtering
   const filteredSchedules = allSchedules.filter(schedule => {
-    const matchesSearch = schedule.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      schedule.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = schedule.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      schedule.description?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     const matchesCategory = categoryFilter === "all" || schedule.category === categoryFilter
     const scheduleDate = schedule.date ? new Date(schedule.date) : null
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    const matchesDate = dateFilter === "all" || 
-      (dateFilter === "today" && scheduleDate?.toDateString() === today.toDateString()) ||
-      (dateFilter === "week" && scheduleDate && scheduleDate >= new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000))
+    let matchesDate = dateFilter === "all"
+    if (scheduleDate) {
+      if (dateFilter === "today") {
+        matchesDate = scheduleDate.toDateString() === today.toDateString()
+      } else if (dateFilter === "week") {
+        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+        matchesDate = scheduleDate >= weekAgo
+      }
+    }
     return matchesSearch && matchesCategory && matchesDate
   })
 
@@ -58,11 +73,6 @@ export function Dashboard({ onEdit, onDelete, onView }: DashboardProps) {
     setSearchTerm(e.target.value)
     setCurrentPage(1) // Reset to first page on search
   }
-
-  const debouncedSearch = React.useMemo(() => {
-    const timer = setTimeout(() => {}, 0)
-    return handleSearch
-  }, [])
 
   if (allSchedules.length === 0) {
     return (
@@ -221,7 +231,7 @@ export function Dashboard({ onEdit, onDelete, onView }: DashboardProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                onClick={() => setCurrentPage((p: number) => Math.max(p - 1, 1))}
                 disabled={currentPage === 1}
               >
                 Previous
@@ -241,7 +251,7 @@ export function Dashboard({ onEdit, onDelete, onView }: DashboardProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                onClick={() => setCurrentPage((p: number) => Math.min(p + 1, totalPages))}
                 disabled={currentPage === totalPages}
               >
                 Next
