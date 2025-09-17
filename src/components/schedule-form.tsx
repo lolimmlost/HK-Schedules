@@ -26,7 +26,7 @@ export interface Entry {
   recurrence?: 'none' | 'daily' | 'weekly' | 'monthly'
 }
 
-const entrySchema = z.object({
+export const entrySchema = z.object({
   id: z.string().uuid(),
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
   duration: z.number().min(1, "Duration must be at least 1 minute").max(480, "Duration max 8 hours"),
@@ -37,7 +37,7 @@ const entrySchema = z.object({
   recurrence: z.enum(['none', 'daily', 'weekly', 'monthly']).default('none'),
 })
 
-const scheduleSchema = z.object({
+export const scheduleSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1, "Title required").max(100, "Title max 100 chars"),
   description: z.string().max(500, "Description max 500 chars").optional(),

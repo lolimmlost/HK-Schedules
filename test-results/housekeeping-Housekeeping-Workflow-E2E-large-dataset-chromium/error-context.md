@@ -1,0 +1,320 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e7]
+        - generic [ref=e9]: Housekeeper Schedule Manager
+      - heading "Housekeeper Schedule Manager" [level=1] [ref=e11]
+      - generic [ref=e13]: 0 schedules
+  - generic [ref=e14]:
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - img [ref=e19]
+          - heading "Add New Schedule" [level=3] [ref=e20]
+        - paragraph [ref=e21]: Fill in the details to create a new schedule with multiple entries
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - generic [ref=e26]:
+              - text: Schedule Title
+              - generic [ref=e27]: "*"
+            - textbox "Schedule Title *" [ref=e28]: Large Test Schedule
+          - generic [ref=e29]:
+            - generic [ref=e30]: Category
+            - combobox [ref=e31] [cursor=pointer]:
+              - generic: Housekeeping
+              - img [ref=e32] [cursor=pointer]
+            - combobox [ref=e34]
+        - generic [ref=e35]:
+          - generic [ref=e36]: Description
+          - textbox "Description" [ref=e37]
+          - paragraph [ref=e38]: 0/500 characters
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - img [ref=e41]
+            - text: Date (Optional)
+          - textbox "Date (Optional)" [ref=e43]
+        - generic [ref=e44]:
+          - generic [ref=e45]:
+            - generic [ref=e46]:
+              - text: Schedule Entries
+              - generic [ref=e47]: "*"
+            - button "Add Entry" [ref=e48] [cursor=pointer]:
+              - img [ref=e49] [cursor=pointer]
+              - text: Add Entry
+          - generic [ref=e51]:
+            - generic [ref=e52]:
+              - generic [ref=e53]:
+                - heading "Entry 1" [level=4] [ref=e54]
+                - button [ref=e55] [cursor=pointer]:
+                  - img [ref=e56] [cursor=pointer]
+              - generic [ref=e59]:
+                - generic [ref=e60]:
+                  - generic [ref=e61]:
+                    - text: Time
+                    - generic [ref=e62]: "*"
+                  - textbox [ref=e63]: 09:00
+                - generic [ref=e64]:
+                  - generic [ref=e65]:
+                    - text: Duration (minutes)
+                    - generic [ref=e66]: "*"
+                  - spinbutton [ref=e67]
+                - generic [ref=e68]:
+                  - generic [ref=e69]:
+                    - text: Assignee
+                    - generic [ref=e70]: "*"
+                  - textbox "e.g., John Doe" [active] [ref=e71]: John Doe
+              - generic [ref=e72]:
+                - generic [ref=e73]:
+                  - generic [ref=e74]:
+                    - text: Task
+                    - generic [ref=e75]: "*"
+                  - textbox "e.g., Clean Room 101" [ref=e76]: Room 5
+                - generic [ref=e77]:
+                  - generic [ref=e78]: Status
+                  - combobox [ref=e79] [cursor=pointer]:
+                    - generic: Pending
+                    - img [ref=e80] [cursor=pointer]
+                  - combobox [ref=e82]
+              - generic [ref=e83]:
+                - generic [ref=e84]:
+                  - generic [ref=e85]: Recurrence
+                  - combobox [ref=e86] [cursor=pointer]:
+                    - generic: None
+                    - img [ref=e87] [cursor=pointer]
+                  - combobox [ref=e89]
+                - generic [ref=e90]:
+                  - generic [ref=e91]: Notes
+                  - textbox "Optional notes for this entry" [ref=e92]
+            - generic [ref=e93]:
+              - generic [ref=e94]:
+                - heading "Entry 2" [level=4] [ref=e95]
+                - button [ref=e96] [cursor=pointer]:
+                  - img [ref=e97] [cursor=pointer]
+              - generic [ref=e100]:
+                - generic [ref=e101]:
+                  - generic [ref=e102]:
+                    - text: Time
+                    - generic [ref=e103]: "*"
+                  - textbox [ref=e104]: 09:00
+                - generic [ref=e105]:
+                  - generic [ref=e106]:
+                    - text: Duration (minutes)
+                    - generic [ref=e107]: "*"
+                  - spinbutton [ref=e108]: "60"
+                - generic [ref=e109]:
+                  - generic [ref=e110]:
+                    - text: Assignee
+                    - generic [ref=e111]: "*"
+                  - textbox "e.g., John Doe" [ref=e112]
+              - generic [ref=e113]:
+                - generic [ref=e114]:
+                  - generic [ref=e115]:
+                    - text: Task
+                    - generic [ref=e116]: "*"
+                  - textbox "e.g., Clean Room 101" [ref=e117]: General Task
+                - generic [ref=e118]:
+                  - generic [ref=e119]: Status
+                  - combobox [ref=e120] [cursor=pointer]:
+                    - generic: Pending
+                    - img [ref=e121] [cursor=pointer]
+                  - combobox [ref=e123]
+              - generic [ref=e124]:
+                - generic [ref=e125]:
+                  - generic [ref=e126]: Recurrence
+                  - combobox [ref=e127] [cursor=pointer]:
+                    - generic: None
+                    - img [ref=e128] [cursor=pointer]
+                  - combobox [ref=e130]
+                - generic [ref=e131]:
+                  - generic [ref=e132]: Notes
+                  - textbox "Optional notes for this entry" [ref=e133]
+            - generic [ref=e134]:
+              - generic [ref=e135]:
+                - heading "Entry 3" [level=4] [ref=e136]
+                - button [ref=e137] [cursor=pointer]:
+                  - img [ref=e138] [cursor=pointer]
+              - generic [ref=e141]:
+                - generic [ref=e142]:
+                  - generic [ref=e143]:
+                    - text: Time
+                    - generic [ref=e144]: "*"
+                  - textbox [ref=e145]: 09:00
+                - generic [ref=e146]:
+                  - generic [ref=e147]:
+                    - text: Duration (minutes)
+                    - generic [ref=e148]: "*"
+                  - spinbutton [ref=e149]: "60"
+                - generic [ref=e150]:
+                  - generic [ref=e151]:
+                    - text: Assignee
+                    - generic [ref=e152]: "*"
+                  - textbox "e.g., John Doe" [ref=e153]
+              - generic [ref=e154]:
+                - generic [ref=e155]:
+                  - generic [ref=e156]:
+                    - text: Task
+                    - generic [ref=e157]: "*"
+                  - textbox "e.g., Clean Room 101" [ref=e158]: General Task
+                - generic [ref=e159]:
+                  - generic [ref=e160]: Status
+                  - combobox [ref=e161] [cursor=pointer]:
+                    - generic: Pending
+                    - img [ref=e162] [cursor=pointer]
+                  - combobox [ref=e164]
+              - generic [ref=e165]:
+                - generic [ref=e166]:
+                  - generic [ref=e167]: Recurrence
+                  - combobox [ref=e168] [cursor=pointer]:
+                    - generic: None
+                    - img [ref=e169] [cursor=pointer]
+                  - combobox [ref=e171]
+                - generic [ref=e172]:
+                  - generic [ref=e173]: Notes
+                  - textbox "Optional notes for this entry" [ref=e174]
+            - generic [ref=e175]:
+              - generic [ref=e176]:
+                - heading "Entry 4" [level=4] [ref=e177]
+                - button [ref=e178] [cursor=pointer]:
+                  - img [ref=e179] [cursor=pointer]
+              - generic [ref=e182]:
+                - generic [ref=e183]:
+                  - generic [ref=e184]:
+                    - text: Time
+                    - generic [ref=e185]: "*"
+                  - textbox [ref=e186]: 09:00
+                - generic [ref=e187]:
+                  - generic [ref=e188]:
+                    - text: Duration (minutes)
+                    - generic [ref=e189]: "*"
+                  - spinbutton [ref=e190]: "60"
+                - generic [ref=e191]:
+                  - generic [ref=e192]:
+                    - text: Assignee
+                    - generic [ref=e193]: "*"
+                  - textbox "e.g., John Doe" [ref=e194]
+              - generic [ref=e195]:
+                - generic [ref=e196]:
+                  - generic [ref=e197]:
+                    - text: Task
+                    - generic [ref=e198]: "*"
+                  - textbox "e.g., Clean Room 101" [ref=e199]: General Task
+                - generic [ref=e200]:
+                  - generic [ref=e201]: Status
+                  - combobox [ref=e202] [cursor=pointer]:
+                    - generic: Pending
+                    - img [ref=e203] [cursor=pointer]
+                  - combobox [ref=e205]
+              - generic [ref=e206]:
+                - generic [ref=e207]:
+                  - generic [ref=e208]: Recurrence
+                  - combobox [ref=e209] [cursor=pointer]:
+                    - generic: None
+                    - img [ref=e210] [cursor=pointer]
+                  - combobox [ref=e212]
+                - generic [ref=e213]:
+                  - generic [ref=e214]: Notes
+                  - textbox "Optional notes for this entry" [ref=e215]
+            - generic [ref=e216]:
+              - generic [ref=e217]:
+                - heading "Entry 5" [level=4] [ref=e218]
+                - button [ref=e219] [cursor=pointer]:
+                  - img [ref=e220] [cursor=pointer]
+              - generic [ref=e223]:
+                - generic [ref=e224]:
+                  - generic [ref=e225]:
+                    - text: Time
+                    - generic [ref=e226]: "*"
+                  - textbox [ref=e227]: 09:00
+                - generic [ref=e228]:
+                  - generic [ref=e229]:
+                    - text: Duration (minutes)
+                    - generic [ref=e230]: "*"
+                  - spinbutton [ref=e231]: "60"
+                - generic [ref=e232]:
+                  - generic [ref=e233]:
+                    - text: Assignee
+                    - generic [ref=e234]: "*"
+                  - textbox "e.g., John Doe" [ref=e235]
+              - generic [ref=e236]:
+                - generic [ref=e237]:
+                  - generic [ref=e238]:
+                    - text: Task
+                    - generic [ref=e239]: "*"
+                  - textbox "e.g., Clean Room 101" [ref=e240]: General Task
+                - generic [ref=e241]:
+                  - generic [ref=e242]: Status
+                  - combobox [ref=e243] [cursor=pointer]:
+                    - generic: Pending
+                    - img [ref=e244] [cursor=pointer]
+                  - combobox [ref=e246]
+              - generic [ref=e247]:
+                - generic [ref=e248]:
+                  - generic [ref=e249]: Recurrence
+                  - combobox [ref=e250] [cursor=pointer]:
+                    - generic: None
+                    - img [ref=e251] [cursor=pointer]
+                  - combobox [ref=e253]
+                - generic [ref=e254]:
+                  - generic [ref=e255]: Notes
+                  - textbox "Optional notes for this entry" [ref=e256]
+            - generic [ref=e257]:
+              - generic [ref=e258]:
+                - heading "Entry 6" [level=4] [ref=e259]
+                - button [ref=e260] [cursor=pointer]:
+                  - img [ref=e261] [cursor=pointer]
+              - generic [ref=e264]:
+                - generic [ref=e265]:
+                  - generic [ref=e266]:
+                    - text: Time
+                    - generic [ref=e267]: "*"
+                  - textbox [ref=e268]: 09:00
+                - generic [ref=e269]:
+                  - generic [ref=e270]:
+                    - text: Duration (minutes)
+                    - generic [ref=e271]: "*"
+                  - spinbutton [ref=e272]: "60"
+                - generic [ref=e273]:
+                  - generic [ref=e274]:
+                    - text: Assignee
+                    - generic [ref=e275]: "*"
+                  - textbox "e.g., John Doe" [ref=e276]
+              - generic [ref=e277]:
+                - generic [ref=e278]:
+                  - generic [ref=e279]:
+                    - text: Task
+                    - generic [ref=e280]: "*"
+                  - textbox "e.g., Clean Room 101" [ref=e281]: General Task
+                - generic [ref=e282]:
+                  - generic [ref=e283]: Status
+                  - combobox [ref=e284] [cursor=pointer]:
+                    - generic: Pending
+                    - img [ref=e285] [cursor=pointer]
+                  - combobox [ref=e287]
+              - generic [ref=e288]:
+                - generic [ref=e289]:
+                  - generic [ref=e290]: Recurrence
+                  - combobox [ref=e291] [cursor=pointer]:
+                    - generic: None
+                    - img [ref=e292] [cursor=pointer]
+                  - combobox [ref=e294]
+                - generic [ref=e295]:
+                  - generic [ref=e296]: Notes
+                  - textbox "Optional notes for this entry" [ref=e297]
+        - generic [ref=e298]:
+          - button "Create Schedule" [disabled]:
+            - img
+            - text: Create Schedule
+          - button "Cancel" [ref=e299] [cursor=pointer]
+    - generic [ref=e300]:
+      - generic [ref=e302]:
+        - img [ref=e303]
+        - heading "Import Schedules" [level=3] [ref=e306]
+      - generic [ref=e308]:
+        - button "Choose File" [ref=e310]
+        - generic [ref=e311]: "Import v1/v2 CSV schedules (v1: Name/Date/Start/End/Tasks; v2: Housekeeper/Assignee/Date/Start/Duration/Tasks)"
+```

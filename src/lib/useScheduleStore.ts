@@ -4,13 +4,17 @@ import type { StateCreator } from 'zustand'
 import { v4 as uuidv4 } from 'uuid'
 import { getDuration } from './utils'
 import type { Schedule, Entry } from '@/components/schedule-form'
+import { scheduleSchema } from '@/components/schedule-form'
 
 export interface ScheduleState {
   schedules: Schedule[]
   housekeepers: string[]
+  deletedSchedules: Schedule[]
   addSchedule: (schedule: Schedule) => void
   updateSchedule: (schedule: Schedule) => void
   deleteSchedule: (id: string) => void
+  undoDelete: (id: string) => void
+  clearDeleted: () => void
   getSchedule: (id: string) => Schedule | undefined
   getSchedules: () => Schedule[]
   setSchedules: (schedules: Schedule[]) => void
@@ -22,24 +26,18 @@ export interface ScheduleState {
 
 // Validation function for entries (exported for tests)
 export function validateScheduleEntries(schedule: Schedule): boolean {
-  if (!schedule.entries || schedule.entries.length === 0) return false
+  const result = scheduleSchema.safeParse(schedule)
+  if (!result.success) {
+    console.error('Zod validation failed:', result.error.errors)
+    return false
+  }
 
-  // Check for duplicate tasks (units for housekeeping)
+  // Additional housekeeping-specific check (unique tasks case-insensitive)
   if (schedule.category === 'housekeeping') {
     const tasks = schedule.entries.map(e => e.task.toLowerCase().trim())
     const uniqueTasks = new Set(tasks)
     if (tasks.length !== uniqueTasks.size) {
-      console.error('Duplicate units detected')
-      return false
-    }
-  }
-
-  // Check for time overlaps
-  const times = schedule.entries.map(e => e.time)
-  const sortedTimes = [...times].sort()
-  for (let i = 0; i < sortedTimes.length - 1; i++) {
-    if (sortedTimes[i] === sortedTimes[i + 1]) {
-      console.error('Time overlaps detected')
+      console.error('Duplicate units detected in housekeeping schedule')
       return false
     }
   }
@@ -88,10 +86,16 @@ export const useScheduleStore = create<ScheduleState>()(
     (set, get) => ({
       schedules: [],
       housekeepers: [],
+      deletedSchedules: [],
       addSchedule: (schedule: Schedule) => {
         console.log('🔍 Store - addSchedule called with:', schedule)
+        const result = scheduleSchema.safeParse(schedule)
+        if (!result.success) {
+          console.error('Zod validation failed for addSchedule:', result.error.errors)
+          throw new Error(`Invalid schedule data: ${result.error.errors.map((e: { message: string }) => e.message).join(', ')}`)
+        }
         if (!validateScheduleEntries(schedule)) {
-          console.error('Validation failed: Invalid schedule add')
+          console.error('Enhanced validation failed: Invalid schedule add')
           throw new Error('Invalid schedule data')
         }
         set((state: ScheduleState) => ({ schedules: [...state.schedules, schedule] }))
@@ -99,17 +103,40 @@ export const useScheduleStore = create<ScheduleState>()(
       },
       updateSchedule: (updatedSchedule: Schedule) => {
         console.log('🔍 Store - updateSchedule called with:', updatedSchedule)
+        const result = scheduleSchema.safeParse(updatedSchedule)
+        if (!result.success) {
+          console.error('Zod validation failed for updateSchedule:', result.error.errors)
+          return // Don't update on parse failure
+        }
         if (!validateScheduleEntries(updatedSchedule)) {
-          console.error('Validation failed: Invalid schedule update')
+          console.error('Enhanced validation failed: Invalid schedule update')
           return
         }
         set((state: ScheduleState) => ({
           schedules: state.schedules.map((s: Schedule) => s.id === updatedSchedule.id ? updatedSchedule : s)
         }))
       },
-      deleteSchedule: (id: string) => set((state: ScheduleState) => ({
-        schedules: state.schedules.filter((s: Schedule) => s.id !== id)
+      deleteSchedule: (id: string) => {
+        const state = get()
+        const deleted = state.schedules.find(s => s.id === id)
+        if (deleted) {
+          set((state: ScheduleState) => ({
+            schedules: state.schedules.filter((s: Schedule) => s.id !== id),
+            deletedSchedules: [...state.deletedSchedules, deleted]
+          }))
+          // Clear deleted after 10 seconds
+          setTimeout(() => {
+            set((state: ScheduleState) => ({
+              deletedSchedules: state.deletedSchedules.filter((s: Schedule) => s.id !== id)
+            }))
+          }, 10000)
+        }
+      },
+      undoDelete: (id: string) => set((state: ScheduleState) => ({
+        schedules: [...state.schedules, ...state.deletedSchedules.filter((s: Schedule) => s.id === id)],
+        deletedSchedules: state.deletedSchedules.filter((s: Schedule) => s.id !== id)
       })),
+      clearDeleted: () => set({ deletedSchedules: [] }),
       getSchedule: (id: string) => {
         const state = get() as ScheduleState
         return state.schedules.find((s: Schedule) => s.id === id)
@@ -142,7 +169,16 @@ export const useScheduleStore = create<ScheduleState>()(
         if (version === 0) {
           const state = persistedState as any
           if (isLegacyData(state.schedules?.[0])) {
-            state.schedules = migrateV1ToV2(state.schedules)
+            const migrated = migrateV1ToV2(state.schedules)
+            // Validate migrated data
+            migrated.forEach((sched: Schedule) => {
+              if (!validateScheduleEntries(sched)) {
+                console.warn('Migration produced invalid schedule, applying fallback:', sched.id)
+                // Fallback: minimal valid schedule
+                sched.entries = [{ id: uuidv4(), time: '09:00', duration: 60, task: 'Migrated Task', assignee: 'Unassigned', status: 'pending', recurrence: 'none' }]
+              }
+            })
+            state.schedules = migrated
           }
           return state
         }

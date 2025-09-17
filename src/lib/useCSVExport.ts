@@ -95,9 +95,16 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
        * @param duration - Pre-calculated duration string (e.g., "2h 30m")
        * @returns Duration string in "Xh Ym" format or "N/A" for invalid times
        */
-      const calculateDuration = (startTime?: string, endTime?: string, duration?: string): string => {
-        // Use provided duration if available and valid
-        if (duration && duration !== 'N/A') return duration
+      const calculateDuration = (startTime?: string, endTime?: string, duration?: number | string): string => {
+        // Use provided duration if available and valid (handle number or string)
+        if (duration && duration !== 'N/A' && duration !== 0) {
+          const durNum = typeof duration === 'string' ? parseInt(duration) || 0 : duration
+          if (durNum > 0) {
+            const hours = Math.floor(durNum / 60)
+            const minutes = durNum % 60
+            return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`
+          }
+        }
         
         // Return N/A for missing or invalid times
         if (!startTime || !endTime || startTime === 'N/A' || endTime === 'N/A') return 'N/A'
@@ -132,6 +139,22 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
           console.warn('🔍 useCSVExport - Duration calculation failed:', durationError)
           return 'N/A'
         }
+      }
+      
+      // Helper to get v1-compatible fields from v2 Schedule (for legacy/migrated data)
+      const getLegacyFields = (schedule: Schedule) => {
+        if (schedule.entries && schedule.entries.length > 0) {
+          // For v2 or migrated: use first entry as representative for legacy fields
+          const firstEntry = schedule.entries[0]
+          const lastEntry = schedule.entries[schedule.entries.length - 1]
+          return {
+            start: firstEntry.time,
+            end: lastEntry.time,
+            tasks: schedule.entries.map(e => e.task).join('; ') || 'No tasks specified'
+          }
+        }
+        // True legacy (no entries): fallback to undefined, will use defaults in export
+        return { start: undefined, end: undefined, tasks: 'No tasks specified' }
       }
 
       /**
@@ -197,7 +220,6 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
           hasTitle: !!schedule?.title && typeof schedule?.title === 'string',
           titleTrimmed: schedule?.title?.trim(),
           date: schedule?.date,
-          start: schedule?.start,
           hasEntries: !!schedule?.entries,
           entriesLength: schedule?.entries?.length
         })
@@ -225,66 +247,18 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
           return
         }
         
-        // Handle legacy schedules (no entries array or empty entries)
-        if (!schedule.entries || (Array.isArray(schedule.entries) && schedule.entries.length === 0)) {
-          console.log(`🔍 useCSVExport - Processing legacy schedule ${index}`)
-          
-          // Calculate duration and prepare fields for legacy format
-          const duration = calculateDuration(schedule.start, schedule.end)
-          const date = schedule.date || ''
-          const start = schedule.start || ''
-          const tasks = schedule.tasks || 'No tasks specified'
-          
-          /**
-           * Legacy format validation:
-           * - Valid name (already checked)
-           * - Either start time OR date present (for scheduling context)
-           */
-          console.log(`🔍 useCSVExport - Legacy validation for ${index}:`, {
-            nameTrimmed,
-            hasStart: !!start,
-            hasDate: !!date,
-            startValue: start,
-            dateValue: date
-          })
-          
-          if (titleTrimmed && (start || date)) {
-            console.log(`🔍 useCSVExport - Adding legacy row for schedule ${index}`)
-            csvFile += processRow([
-              schedule.title,                   // Housekeeper title (v2 format)
-              '',                               // No assignee for legacy format
-              date,                             // Schedule date
-              start,                            // Start time
-              duration,                         // Calculated duration
-              tasks                             // Task description
-            ])
-            validRows++
-          } else {
-            console.warn(`🔍 useCSVExport - Skipping legacy schedule ${index}: validation failed`, {
-              nameTrimmed,
-              start: !!start,
-              date: !!date
-            })
-          }
-        } else if (schedule.entries && Array.isArray(schedule.entries)) {
-          /**
-           * Handle new format with individual entries per assignee
-           * Each entry becomes a separate CSV row under the same housekeeper
-           */
+        // Handle all schedules - unified logic for legacy (migrated or true legacy) and v2
+        console.log(`🔍 useCSVExport - Processing schedule ${index} (entries: ${schedule.entries?.length || 0})`)
+        
+        const legacyFields = getLegacyFields(schedule)
+        const { start, end, tasks } = legacyFields
+        const date = schedule.date || ''
+        
+        if (schedule.entries && Array.isArray(schedule.entries) && schedule.entries.length > 0) {
+          // v2 format: export each entry as row
           console.log(`🔍 useCSVExport - Processing entries for schedule ${index}, count:`, schedule.entries.length)
           
           schedule.entries.forEach((entry, entryIndex) => {
-            /**
-             * Log entry details for validation and debugging
-             * Helps identify issues with individual assignee entries
-             */
-            console.log(`🔍 useCSVExport - Processing entry ${entryIndex} for schedule ${index}:`, {
-              assignee: entry?.assignee,
-              time: entry?.time,
-              duration: entry?.duration,
-              tasks: entry?.tasks
-            })
-            
             // Validate entry structure
             if (!entry || !entry.assignee || typeof entry.assignee !== 'string') {
               console.warn(`🔍 useCSVExport - Skipping invalid entry ${entryIndex} for schedule ${index}:`, entry)
@@ -292,19 +266,14 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
             }
             
             const assigneeTrimmed = entry.assignee.trim()
-            // Skip entries with empty assignee names
             if (!assigneeTrimmed) {
               console.warn(`🔍 useCSVExport - Skipping entry ${entryIndex} for schedule ${index}: empty assignee after trim`)
               return
             }
             
             const time = entry.time || ''
-            /**
-             * Use entry-specific duration or calculate from time fields
-             * Entry format typically has pre-calculated duration
-             */
             const duration = calculateDuration(undefined, undefined, entry.duration)
-            const tasks = entry.tasks || 'No tasks specified'
+            const entryTask = entry.task || 'No task specified'
             
             /**
              * Entry validation:
@@ -316,10 +285,10 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
               csvFile += processRow([
                 schedule.title,                   // Housekeeper title (v2 format, same for all entries)
                 entry.assignee,                   // Specific assignee for this entry
-                schedule.date || '',              // Schedule date (same for all entries)
+                date,                             // Schedule date (same for all entries)
                 time,                             // Entry-specific start time
                 duration,                         // Entry duration
-                tasks                             // Entry-specific tasks
+                entryTask                         // Entry-specific task
               ])
               validRows++
             } else {
@@ -331,15 +300,44 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
             }
           })
         } else {
+          // Legacy/migrated without usable entries: export as single row using derived fields
+          console.log(`🔍 useCSVExport - Processing legacy schedule ${index}`)
+          
+          const legacyStart = start || ''
+          const legacyDuration = calculateDuration(start, end)
+          const legacyTasks = tasks || 'No tasks specified'
+          
           /**
-           * Unrecognized schedule format - log for debugging
-           * This shouldn't happen with proper Schedule type enforcement
+           * Legacy format validation:
+           * - Valid title (already checked)
+           * - Either start time OR date present (for scheduling context)
            */
-          console.warn(`🔍 useCSVExport - Skipping schedule ${index}: unrecognized format`, {
-            hasEntries: !!schedule.entries,
-            entriesType: typeof schedule.entries,
-            entriesIsArray: Array.isArray(schedule.entries)
+          console.log(`🔍 useCSVExport - Legacy validation for ${index}:`, {
+            titleTrimmed,
+            hasStart: !!legacyStart,
+            hasDate: !!date,
+            startValue: legacyStart,
+            dateValue: date
           })
+          
+          if (titleTrimmed && (legacyStart || date)) {
+            console.log(`🔍 useCSVExport - Adding legacy row for schedule ${index}`)
+            csvFile += processRow([
+              schedule.title,                   // Title
+              '',                               // No assignee for legacy format
+              date,                             // Schedule date
+              legacyStart,                      // Start time
+              legacyDuration,                   // Calculated duration
+              legacyTasks                       // Task description
+            ])
+            validRows++
+          } else {
+            console.warn(`🔍 useCSVExport - Skipping legacy schedule ${index}: validation failed`, {
+              titleTrimmed,
+              start: !!legacyStart,
+              date: !!date
+            })
+          }
         }
       })
 

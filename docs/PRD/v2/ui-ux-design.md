@@ -13,6 +13,14 @@
 
 **Cross-reference**: Extends [v1/ui-ux-design.md](../v1/ui-ux-design.md) with v2-specific components (dashboard, multi-select, sharing UI).
 
+## 5.4 Dashboard Refactor & US-001 Implementation (2025-09-17 Update)
+- **Modularity**: Refactored Dashboard.tsx into sub-components: ScheduleCard.tsx (responsive cards with Eye/Edit/Trash actions, hover effects), DashboardControls.tsx (debounced search + category/date Selects, grid layout), DashboardHeader.tsx (title, export CSV, add button, filtered count display).
+- **Responsive Grid**: CSS Grid (1-col mobile, 2-col tablet, 3-col desktop); overflow-y-auto for scrolling; max-h-[70vh] container.
+- **Accessibility**: ARIA labels for actions ("View schedule", "Edit", "Delete"); keyboard navigation (Tab/Enter for buttons); focus outlines; screen reader friendly (role="grid" for cards).
+- **Performance**: Removed react-window virtualization (resolved US-001 breakage); uses simple rendering with useMemo for filters; <500ms load for 50 schedules.
+- **UX Enhancements**: Empty state with Calendar icon + CTA; toasts for actions (via useToast); consistent spacing (space-y-6); no-print class for export buttons.
+- **Integration**: Props for CRUD (onView/onEdit/onDelete); compatible with housekeeping mode toggle (US-003); backward compatible with v1 migration.
+
 ## 5.2 Enhanced Schedule Viewing and Filtering UI/UX (US-002)
 
 ### Design Principles

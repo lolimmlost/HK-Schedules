@@ -1,8 +1,20 @@
 import { renderHook, act } from '@testing-library/react'
-import { vi } from 'vitest'
+import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { useScheduleStore, validateScheduleEntries, isLegacyData, migrateV1ToV2 } from '../useScheduleStore'
 import type { Schedule, Entry } from '../../components/schedule-form'
 import { v4 as uuidv4 } from 'uuid'
+
+// Mock localStorage for Node.js environment
+const localStorageMock = (() => {
+  let store: { [key: string]: string } = {}
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => { store[key] = value.toString() },
+    removeItem: (key: string) => { delete store[key] },
+    clear: () => { store = {} }
+  }
+})()
+Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 
 describe('useScheduleStore', () => {
   beforeEach(() => {

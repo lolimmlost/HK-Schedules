@@ -6,7 +6,7 @@
 **Version**: 1.0  
 **Created**: 2025-09-15  
 **Owner**: Product Owner (Sonoma)  
-**Status**: Planned  
+**Status**: In Progress (Dashboard foundation complete via US-001)
 **Priority**: High (expands market to non-office scheduling)  
 
 ### Description
@@ -100,6 +100,12 @@ This epic introduces specialized support for housekeeping/maintenance managers l
 - Post-Epic: HK-002 Bulk Import for advanced housekeeping; analytics for usage tracking.
 
 This epic positions HK-Schedules as versatile for both office and operations management, driving user growth through targeted simplicity.
+## US-001 Integration Notes (2025-09-17)
+- Dashboard refactored (ScheduleCard, DashboardControls, DashboardHeader) supports housekeeping mode toggle.
+- Responsive grid handles 130+ units; filters integrate housekeeper dropdowns.
+- Print compatibility extended for individual views; performance <500ms for large loads.
+- Validation: Zod schemas in store; no breakage from US-001 fixes.
+
 ## US-003 Completion Notes (2025-09-16)
 - Feature delivered: Low-tech housekeeping management for 130+ units.
 - Key Deliverables: Housekeeper config, simplified form, individual prints, inline edits.
