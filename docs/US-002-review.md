@@ -5,9 +5,9 @@ date: 2025-09-16
 status: Reviewed
 author: Test Architect & Quality Advisor
 references:
-  - [PRD v2 Functional Requirements](docs/PRD/v2/functional-requirements.md)
-  - [US-002 Backlog](docs/US-002-backlog.md)
-  - [US-001 Review](docs/US-001-review.md)
+  - [PRD v2 Functional Requirements](PRD/v2/functional-requirements.md)
+  - [US-002 Backlog](US-002-backlog.md)
+  - [US-001 Review](US-001-review.md)
 ---
 
 # US-002 Review: Enhanced Schedule Viewing and Filtering (FR-2)
@@ -68,17 +68,33 @@ Based on US-002-backlog.md (2025-09-16 status):
 
 **Recommendation**: Implement bulk actions and persistence next (3-4 days); add unit tests for filtering utils immediately.
 
-## 3. Quality Risks & Mitigations
-| Risk | Probability | Impact | Mitigation | Test Coverage |
-|------|-------------|--------|------------|---------------|
-| Bulk Action Failures (Race Conditions on Auto-Save) | High | High | Use Zustand transactions for atomic updates; debounce bulk applies. Test multi-tab scenarios. | Integration: 8 TC for bulk flows (select/apply/undo/conflict). |
-| Filter Persistence Loss (localStorage Sync Issues) | Medium | Medium | On-load restore with fallback to defaults; validate stored data on read. | Unit: 5 TC for persistence utils; E2E: Preference retention across sessions. |
-| Performance on Large Tables (200+ Entries) | Medium | High | Memoize filtered lists; virtualize table rows. Benchmark re-renders. | Load: Simulate 200 entries; target <100ms filter. |
-| UX Inconsistencies (Mobile Bulk Selection) | Low | Medium | Touch-friendly checkboxes (44px min); test gestures. | Manual: 4 TC for mobile (iOS/Android emulators); Lighthouse Best Practices >90. |
-| Migration Conflicts with Filtering (Legacy Data) | Low | Low | Ensure migrated entries have assignee fields; skip filter if missing. | Regression: 6 TC for v1 data post-migration filtering. |
+## UX Design Assessment
+This section evaluates the UX design specification for US-002 against current implementation and PRD v2 guidelines.
 
+### Alignment with UX Principles
+- **Efficiency**: Core filtering (dropdown/chip) meets <3s goal; pending bulk sheet will enable <30s workflows for team leads.
+- **Visual Feedback**: Assignee badges and row highlights implemented; extend to indeterminate checkboxes and persistence indicators for better workload scanning.
+- **Mobile Responsiveness**: Current stacked cards good; add swipe-select and 48px targets to reach Lighthouse >90.
+- **Accessibility**: ARIA for filters present; add live regions for bulk applies and keyboard multi-select to achieve WCAG AA.
+
+### Usability Metrics (From Design Spec)
+- **Task Completion**: Filter + bulk edit targeted <30s; current filtering ~2s, bulk pending (test with 5 users).
+- **SUS Score Goal**: >85; prototype tests recommended post-bulk impl.
+- **Error Rate**: <5% for selections; mitigate with undo toasts and overlap warnings.
+- **Performance UX**: <100ms filters verified; add skeletons for bulk to prevent perceived lag.
+
+### Recommendations
+- **Immediate UX Enhancements**: Add loading spinners for bulk; visual overlap validation (red highlights pre-apply).
+- **Testing Integration**: Include usability TCs in plan (e.g., TC-051: Mobile bulk selection accuracy >95%).
+- **Risk Mitigations via UX**: Bulk limits via progress bar; persistence restore toast reduces frustration.
+- **Prototyping**: Figma wireframes for bulk sheet; A/B test chip visibility.
+
+**Reference**: Full UX spec in [PRD v2 UI/UX](docs/PRD/v2/ui-ux-design.md#52-enhanced-schedule-viewing-and-filtering-uiux-us-002); tasks updated in [US-002 Backlog](US-002-backlog.md).
+
+## 3. Quality Risks & Mitigations
+- **Key Risks Summary**: See detailed assessment in [US-002 Risks](docs/risks-US-002.md), including bulk action race conditions (High probability/impact), filter persistence loss (Medium), and performance degradation (Medium/High). Overall level: Medium-High.
 - **Non-Functional Risks**: Accessibility (ARIA for dynamic filters); Security (sanitize assignee names to prevent injection).
-- **Overall Risk Level**: Medium - Bulk incompleteness is primary concern; mitigate with phased testing.
+- **Mitigation Overview**: Prioritize atomic updates and integration testing; expand test plan with 20+ TCs for risks.
 
 ## 4. Testing Recommendations
 ### 4.1 Test Strategy

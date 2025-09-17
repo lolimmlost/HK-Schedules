@@ -13,7 +13,43 @@
 
 **Cross-reference**: Extends [v1/ui-ux-design.md](../v1/ui-ux-design.md) with v2-specific components (dashboard, multi-select, sharing UI).
 
-## 5.2 Housekeeping-Specific UI/UX (US-003 Extensions)
+## 5.2 Enhanced Schedule Viewing and Filtering UI/UX (US-002)
+
+### Design Principles
+- **Efficiency for Workload Review**: Prioritize quick filtering and bulk actions to enable team leads to assess assignee loads in <30 seconds.
+- **Visual Hierarchy**: Use badges and highlights to draw attention to filtered/selected items; minimize clutter with progressive disclosure for bulk options.
+- **Mobile-First Responsiveness**: Stacked views on small screens; large touch targets (≥48px) for checkboxes and buttons.
+- **Feedback & Undo**: Immediate visual confirmation (chips, highlights) with easy undo to build user confidence in bulk operations.
+
+### Component Specifications
+- **Filter Bar** (Above Table): Flex row (sticky); shadcn Select for assignee (w-48, searchable); conditional Badge chip (e.g., "John (12/45) ×"); loading skeleton during extraction.
+- **Enhanced Table** (`src/components/schedule-table.tsx`): shadcn Table with sortable headers; checkbox column (indeterminate support); row highlights (bg-accent/10) for filtered; inline editable cells (time, assignee, status via Select/Input).
+- **Bulk Actions Sheet**: Slide-up modal/sheet on selection (≥1 row); shadcn Select for status changes; destructive Delete button; Apply button with loading spinner; warning for >50 selections.
+- **Persistence Indicator**: Subtle save icon (green tick) in header post-change; toast on restore ("Preferences restored").
+- **Empty States**: Illustrated card for no results ("No matching tasks—clear filter?") with CTA button.
+
+### Visual Guidelines
+- **Colors**: Primary #3B82F6 for filter buttons/chips; Success #10B981 for completed badges; Warning #F59E0B for bulk limits.
+- **Icons**: Lucide Filter (20px, muted); CheckSquare for selection; RotateCcw for undo.
+- **Interactions**: Hover scale 1.02; focus outline blue; animations <200ms (Framer Motion for sheet slide-in).
+- **Feedback**: shadcn Toasts (top-right): Success for applies ("12 tasks updated"), Undo button (5s timeout); Error for overlaps ("Cannot apply—check conflicts").
+- **Mobile Optimizations**: Cards stack vertically; swipe-to-select rows; bottom action sheet for bulk; increased padding (p-6).
+
+### Wireframes (Text)
+- **Filter Bar (Desktop)**: [Filter Icon] Filter by Assignee: [Dropdown ▼ "John Doe"] [Chip: John (12/45) ×]
+- **Table Row (Filtered)**: ☐ 09:00 [Badge: John (green)] Clean Unit 101 [Select: Pending (yellow)] [Edit/Delete]
+- **Bulk Sheet (Mobile)**: Header: "5 Selected" [Clear] | Status: [Pending ▼] [Apply] [Delete (red)]
+- **Toast**: ✅ 12 tasks updated [Undo]
+
+### Accessibility & Usability
+- **ARIA Compliance**: live region for filter updates ("Showing 12 tasks"); ARIA-selected for rows; labels for all Selects ("Change status to...").
+- **Keyboard Navigation**: Tab through filters/table; Space selects checkboxes; Shift+click multi-select; Esc closes sheets.
+- **Testing Focus**: Usability tests with team leads (completion time <30s for filter+bulk); SUS >85; edge cases (no assignees, large datasets >200 entries).
+- **Performance**: Filter <100ms re-render; bulk <500ms apply; virtualize table rows for scale.
+
+**Cross-reference**: Builds on FR-2 (filtering/bulk) in [functional-requirements.md](./functional-requirements.md); mitigates risks in [docs/risks-US-002.md](../docs/risks-US-002.md).
+
+## 5.3 Housekeeping-Specific UI/UX (US-003 Extensions)
 
 ### Design Principles for Low-Tech Users
 - **Minimalism**: Reduce cognitive load with 1-2 actions per screen; use progressive disclosure (e.g., show housekeeper list first, then schedule form only when needed).
