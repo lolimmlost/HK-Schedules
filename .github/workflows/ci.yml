@@ -28,6 +28,12 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Start server
+        run: npm run preview &
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:4173
+
       - name: Run e2e tests
         run: npm run test:e2e
         env:
