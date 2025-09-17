@@ -36,6 +36,11 @@ function App() {
   const [selectedSchedule, setSelectedSchedule] = React.useState<Schedule | null>(null)
   const [viewMode, setViewMode] = React.useState<'dashboard' | 'view'>( 'dashboard')
 
+  // Make selectedSchedule reactive to store changes
+  const freshSelectedSchedule = useScheduleStore((state) =>
+    selectedSchedule?.id ? state.schedules.find((s: Schedule) => s.id === selectedSchedule.id) : null
+  )
+
   // CSV export hook
   const exportCSV = useCSVExport()
 
@@ -521,18 +526,18 @@ function App() {
           </ErrorBoundary>
         )}
 
-        {!showForm && viewMode === 'view' && selectedSchedule && (
+        {!showForm && viewMode === 'view' && freshSelectedSchedule && (
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <Button variant="outline" onClick={handleBackToDashboard}>
                 <ChevronLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Button>
-              <h2 className="text-2xl font-bold">{selectedSchedule.title}</h2>
+              <h2 className="text-2xl font-bold">{freshSelectedSchedule.title}</h2>
             </div>
             <ErrorBoundary>
               <ScheduleTable
-                schedules={[selectedSchedule]}
+                schedules={[freshSelectedSchedule]}
                 onEdit={handleEditSchedule}
                 onDelete={handleDeleteSchedule}
                 onAddSchedule={handleAddClick}
@@ -561,10 +566,10 @@ function App() {
         {/* Print Schedule - Always rendered but hidden on screen */}
         <PrintSchedule
           className="hidden print:block"
-          schedules={viewMode === 'view' && selectedSchedule ? [selectedSchedule] : schedules}
+          schedules={viewMode === 'view' && freshSelectedSchedule ? [freshSelectedSchedule] : schedules}
           companyName="Housekeeper Services"
           printedAt={new Date()}
-          isSingleSchedule={viewMode === 'view' && !!selectedSchedule}
+          isSingleSchedule={viewMode === 'view' && !!freshSelectedSchedule}
         />
       </div>
       <CookieBanner />
