@@ -527,7 +527,7 @@ function App() {
         )}
 
         {!showForm && viewMode === 'view' && freshSelectedSchedule && (
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-screen overflow-auto">
             <div className="flex items-center gap-4">
               <Button variant="outline" onClick={handleBackToDashboard}>
                 <ChevronLeft className="h-4 w-4 mr-2" />

@@ -31,7 +31,6 @@ export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeep
 
   // Flatten and filter entries for the housekeeper
   const filteredEntries: Entry[] = filteredSchedules
-    .filter(s => s.category === 'housekeeping') // Focus on housekeeping
     .flatMap(s => s.entries || [])
     .filter(e => !housekeeper || e.assignee === housekeeper)
     .sort((a, b) => a.time.localeCompare(b.time))
@@ -66,7 +65,7 @@ export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeep
           {companyName}
         </h1>
         <p className="text-base text-muted-foreground mb-3 print:text-base print:mb-1">
-          {housekeeper ? `${housekeeper}'s ` : ''}{isSingle ? 'Schedule Preview' : 'Housekeeper Schedule'}
+          {isSingle ? 'Schedule Details' : `${housekeeper ? `${housekeeper}'s ` : ''}Housekeeper Schedule`}
         </p>
         {!isSingle && (
           <div className="border-t pt-3 print:border-t print:pt-3 print:border-black">
