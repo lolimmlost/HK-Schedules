@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { CookieBanner } from "@/components/ui/cookie-banner"
 import { ScheduleForm } from "@/components/schedule-form"
 import { ScheduleTable } from "@/components/schedule-table"
 import { PrintSchedule } from "@/components/print-schedule"
@@ -566,6 +567,7 @@ function App() {
           isSingleSchedule={viewMode === 'view' && !!selectedSchedule}
         />
       </div>
+      <CookieBanner />
     </div>
   )
 }

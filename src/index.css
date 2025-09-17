@@ -41,10 +41,17 @@ h1 {
 }
 
 #root {
+  width: 100%;
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+}
+
+@media (max-width: 768px) {
+  #root {
+    padding: 1rem;
+  }
 }
 
 @media (prefers-color-scheme: light) {
@@ -123,6 +130,10 @@ h1 {
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
+  }
+  html, body {
+    overflow-x: hidden;
   }
   body {
     @apply bg-background text-foreground;
