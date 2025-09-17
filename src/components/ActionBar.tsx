@@ -7,7 +7,6 @@ interface ActionBarProps {
   onAddSchedule: () => void
   onPrint: () => void
   onExport: () => void
-  isPrinting?: boolean
   scheduleCount: number
 }
 
@@ -15,7 +14,6 @@ export function ActionBar({
   onAddSchedule,
   onPrint,
   onExport,
-  isPrinting = false,
   scheduleCount
 }: ActionBarProps) {
   return (

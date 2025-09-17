@@ -11,8 +11,8 @@ import {
 }
 from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { User, Calendar, Clock, Edit, Trash2, Loader2, Plus, Filter } from "lucide-react"
-import { formatDate, getDuration } from "@/lib/utils"
+import { User, Calendar, Clock, Edit, Trash2, Loader2, Filter } from "lucide-react"
+import { formatDate } from "@/lib/utils"
 import { useScheduleFilter } from "@/lib/useScheduleFilter"
 import { ScheduleDesktopTable } from "./ScheduleDesktopTable"
 //import { ScheduleMobileCards } from "./ScheduleMobileCards"
@@ -34,7 +34,7 @@ interface EditState {
   previousValue: string
 }
 
-export function ScheduleTable({ schedules, onEdit, onDelete, onAddSchedule }: ScheduleTableProps) {
+export function ScheduleTable({ schedules, onEdit, onDelete }: ScheduleTableProps) {
   // Ensure schedules is always an array - handle both array and storage object formats
   const safeSchedules: Schedule[] = Array.isArray(schedules) ? schedules : (schedules?.schedules || [])
   
@@ -60,7 +60,7 @@ export function ScheduleTable({ schedules, onEdit, onDelete, onAddSchedule }: Sc
     
     return {
       ...legacy,
-      entries: [entry],
+      entries: [{ ...entry, recurrence: 'none' }],
       version: '2.0'
     }
   }
@@ -121,7 +121,6 @@ export function ScheduleTable({ schedules, onEdit, onDelete, onAddSchedule }: Sc
   console.log('🔍 ScheduleTable render debug - isSmallScreen:', isSmallScreen, 'schedules.length:', safeSchedules.length, 'window.innerWidth:', window.innerWidth)
 
   // Compute empty state after all hooks
-  const showEmptyState = safeSchedules.length === 0
 const handleDelete = async (id: string) => {
   if (deletingId === id) return // Already deleting
 
@@ -140,7 +139,6 @@ const handleDelete = async (id: string) => {
 
 const handleInlineEdit = (schedule: Schedule, entry: Entry, field: 'status' | 'assignee' | 'time', newValue: string) => {
   const previousValue = entry[field] as string
-  const entryIndex = schedule.entries?.findIndex(e => e.id === entry.id) || 0
 
   // Optimistic update
   const updatedSchedule = {

@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { User, Calendar, Clock } from "lucide-react"
 
-import { formatDate, getDuration } from "@/lib/utils"
 import type { Schedule, Entry } from "./schedule-form"
 
 interface PrintScheduleProps {

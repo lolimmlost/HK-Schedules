@@ -24,7 +24,7 @@ export function DashboardControls({
   onDateChange
 }: DashboardControlsProps) {
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm)
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm)
+  const [_debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
 
   const categories = ["all", ...new Set(schedules.map(s => s.category))] as const
 

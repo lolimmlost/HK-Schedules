@@ -1,4 +1,3 @@
-//import React from 'react'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -41,7 +40,7 @@ export function ScheduleMobileCards({
         const scheduleEntries = filteredEntriesBySchedule[schedule.id] || []
         const isExpanded = expandedSchedules.has(schedule.id)
         const firstEntry = scheduleEntries[0]
-        const totalDuration = scheduleEntries.reduce((sum, entry) => sum + parseFloat(entry.duration || '0'), 0)
+        const totalDuration = scheduleEntries.reduce((sum, entry) => sum + (entry.duration || 0), 0)
         
         return (
           <Card key={schedule.id} className="w-full">
@@ -55,7 +54,7 @@ export function ScheduleMobileCards({
                   <User className="h-5 w-5 text-primary" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-medium text-foreground truncate">{schedule.name}</h3>
+                  <h3 className="font-medium text-foreground truncate">{schedule.title || schedule.name}</h3>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                     <Calendar className="h-3 w-3" />
                     {formatDate(schedule.date)}
@@ -127,20 +126,20 @@ export function ScheduleMobileCards({
                       Time
                     </span>
                     <span className="font-medium">
-                      {firstEntry?.time || schedule.start}
+                      {firstEntry?.time || schedule.start || 'N/A'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Duration</span>
                     <Badge variant="outline" className="text-xs px-2 py-0.5">
-                      {firstEntry?.duration || (schedule.start && schedule.end ? getDuration(schedule.start, schedule.end) : 'N/A')}h
+                      {firstEntry?.duration || (schedule.start && schedule.end ? `${getDuration(schedule.start, schedule.end)}h` : 'N/A')}h
                     </Badge>
                   </div>
                 </div>
                 <div className="mt-3">
                   <span className="text-muted-foreground text-sm">Tasks</span>
                   <div className="ml-2 mt-1 text-sm line-clamp-2">
-                    {firstEntry?.tasks || schedule.tasks || "No tasks specified"}
+                    {firstEntry?.task || schedule.tasks || "No tasks specified"}
                     {scheduleEntries.length > 1 && (
                       <span className="text-muted-foreground"> + {scheduleEntries.length - 1} more</span>
                     )}
@@ -193,7 +192,7 @@ export function ScheduleMobileCards({
                                 {entry.status}
                               </Badge>
                             </div>
-                            <div className="text-sm font-medium truncate">{entry.tasks}</div>
+                            <div className="text-sm font-medium truncate">{entry.task}</div>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0 text-xs">

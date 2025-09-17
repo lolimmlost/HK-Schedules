@@ -7,9 +7,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { User, Calendar, Clock, List, Plus, Trash2, PlusCircle } from "lucide-react"
+import { User, Calendar, List, Plus, Trash2, PlusCircle } from "lucide-react"
 
-import { getDuration } from "@/lib/utils"
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -46,6 +45,11 @@ export const scheduleSchema = z.object({
   entries: z.array(entrySchema).min(1, "At least one entry required"),
   version: z.string().default('2.0'),
   recurrence: z.enum(['none', 'daily', 'weekly', 'monthly']).default('none'),
+  // Legacy properties (optional for backward compatibility)
+  name: z.string().optional(),
+  start: z.string().optional(),
+  end: z.string().optional(),
+  tasks: z.string().optional(),
 }).refine((data) => {
   // No time overlaps
   const times = data.entries.map(e => e.time)

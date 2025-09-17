@@ -21,8 +21,8 @@ export function useScheduleFilter(
         })
       } else {
         // Legacy schedules
-        if (schedule.name) {
-          assignees.add(schedule.name)
+        if (schedule.title || schedule.name) {
+          assignees.add((schedule.title || schedule.name)!)
         }
       }
     })
@@ -47,7 +47,7 @@ export function useScheduleFilter(
         })
       } else {
         // Legacy format: create single entry and check assignee
-        if (!schedule.start || !schedule.end || !schedule.name) return // Skip invalid legacy
+        if (!schedule.start || !schedule.end || !(schedule.title || schedule.name)) return // Skip invalid legacy
         
         try {
           const tasks = schedule.tasks || "No tasks specified"
@@ -55,9 +55,9 @@ export function useScheduleFilter(
           const legacyEntry: Entry = {
             id: `${schedule.id}-entry-1`,
             time: schedule.start,
-            duration: duration || '0',
-            tasks,
-            assignee: schedule.name,
+            duration: Number(duration || 0),
+            task: tasks,
+            assignee: (schedule.title || schedule.name)!,
             status: 'pending'
           }
           

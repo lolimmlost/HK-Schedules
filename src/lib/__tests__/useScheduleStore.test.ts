@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { useScheduleStore, validateScheduleEntries, isLegacyData, migrateV1ToV2 } from '../useScheduleStore'
-import type { Schedule, Entry } from '../../components/schedule-form'
+import type { Schedule } from '../../components/schedule-form'
 import { v4 as uuidv4 } from 'uuid'
 
 // Mock localStorage for Node.js environment

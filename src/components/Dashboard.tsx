@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useMemo } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Calendar, Users, Plus, Download, Search } from "lucide-react"
+import { Calendar, Plus } from "lucide-react"
 import { useScheduleStore } from "@/lib/useScheduleStore"
 import { Schedule } from "./schedule-form"
-import { formatDate } from "@/lib/utils"
 import { DashboardHeader } from "./DashboardHeader"
 import { DashboardControls } from "./DashboardControls"
 import { ScheduleCard } from "./ScheduleCard"
@@ -20,10 +18,9 @@ interface DashboardProps {
 export function Dashboard({ onEdit, onDelete: onDeleteProp, onView, onAddSchedule }: DashboardProps) {
   const { schedules } = useScheduleStore()
   const allSchedules = schedules
-  const { toast } = useToast()
 
   const [searchTerm, setSearchTerm] = useState("")
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm)
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [dateFilter, setDateFilter] = useState("all")
 

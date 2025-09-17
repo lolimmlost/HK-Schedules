@@ -8,7 +8,7 @@ interface CookieConsent {
 
 export function CookieBanner() {
   const [isVisible, setIsVisible] = React.useState(false)
-  const [consent, setConsent] = React.useState<CookieConsent | null>(null)
+  const [, setConsent] = React.useState<CookieConsent | null>(null)
 
   React.useEffect(() => {
     const savedConsent = localStorage.getItem('cookieConsent')
