@@ -2,21 +2,29 @@
 
 A modern web application for managing housekeeper schedules with CSV import/export capabilities, built with React, TypeScript, Tailwind CSS, and shadcn/ui components.
 
-## ✨ Features
+## Features
 
-- ✅ **Add, edit, and delete** housekeeper schedules with form validation
-- ✅ **Optional date assignment** for schedules with formatted display
-- ✅ **Time range specification** (start/end times) with duration calculation
-- ✅ **Task descriptions** with character limits and bullet-point formatting
-- ✅ **CSV import/export** functionality with proper error handling
-- ✅ **Professional print view** optimized for letter-size paper
-- ✅ **Responsive design** with shadcn/ui components and mobile-first approach
-- ✅ **Local storage persistence** with automatic saving
-- ✅ **Network accessible** for Cloudflare tunnel deployment
-- ✅ **Loading states and visual feedback** throughout the application
-- ✅ **Icons and visual hierarchy** for better user experience
+- **Add, edit, and delete** housekeeper schedules with form validation
+- **Optional date assignment** for schedules with formatted display
+- **Time range specification** (start/end times) with duration calculation
+- **Task descriptions** with character limits and bullet-point formatting
+- **CSV import/export** functionality with proper error handling
+- **Professional print view** optimized for letter-size paper
+- **Responsive design** with shadcn/ui components and mobile-first approach
+- **Local storage persistence** with automatic saving
+- **Network accessible** for Cloudflare tunnel deployment
+- **Loading states and visual feedback** throughout the application
+- **Icons and visual hierarchy** for better user experience
 
-## 🛠️ Technology Stack
+## Screenshots
+
+![Initial Load Debug](debug-initial-load.png)
+![Large Initial View](debug-large-initial.png)
+![Large View Pre-Fix](debug-large-pre.png)
+
+These screenshots demonstrate the application's load states and responsive behavior before and after mobile optimizations.
+
+## Technology Stack
 
 - **Frontend**: React 18 + TypeScript + Vite 4
 - **UI Components**: shadcn/ui + Tailwind CSS 3.3
@@ -27,7 +35,7 @@ A modern web application for managing housekeeper schedules with CSV import/expo
 - **Deployment**: Cloudflare Tunnel ready
 - **Validation**: Custom React form validation
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -94,7 +102,7 @@ npm start
 cloudflared tunnel --url http://localhost:4000
 ```
 
-## 📋 Project Structure
+## Project Structure
 
 ```
 HK-Schedules/
@@ -127,7 +135,7 @@ HK-Schedules/
 └── .gitignore                    # Git ignore rules
 ```
 
-## 🎨 UI Components & Features
+## UI Components & Features
 
 ### **Enhanced Form Experience**
 - **Real-time validation** with error messages and visual feedback
@@ -165,7 +173,7 @@ HK-Schedules/
 - **Responsive breakpoints** for all screen sizes
 - **Accessible color contrast** and focus states
 
-## 🔧 Configuration Files
+## Configuration Files
 
 ### Vite Configuration (`vite.config.ts`)
 
@@ -235,7 +243,7 @@ export default {
 }
 ```
 
-## 🌐 Cloudflare Tunnel Setup
+## Cloudflare Tunnel Setup
 
 ### Development Tunnel (Port 3001)
 
@@ -286,7 +294,7 @@ Run tunnel:
 cloudflared tunnel run housekeeper-app
 ```
 
-## 📱 Usage Guide
+## Usage Guide
 
 ### Adding Schedules
 
@@ -344,7 +352,7 @@ John Doe,2025-09-15,09:00,12:00,"Clean kitchen, vacuum living room, dust surface
 3. Professional preview in print dialog
 4. Optimized layout for physical printing
 
-## 🏗️ npm Scripts
+## npm Scripts
 
 | Script | Description | Port | Purpose |
 |--------|-------------|------|---------|
@@ -367,7 +375,7 @@ John Doe,2025-09-15,09:00,12:00,"Clean kitchen, vacuum living room, dust surface
 }
 ```
 
-## 🔍 Troubleshooting
+## Troubleshooting
 
 ### Build Issues
 
@@ -443,11 +451,11 @@ HOST=0.0.0.0 npm run dev
 - Test with `Ctrl+P` and check "More settings" → "Background graphics"
 - Verify `@page` margins in print CSS
 
-## 📄 License
+## License
 
 MIT License - see LICENSE file for details.
 
-## 🙌 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/amazing-feature`)
@@ -455,14 +463,14 @@ MIT License - see LICENSE file for details.
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open Pull Request
 
-## 📞 Support
+## Support
 
 For setup issues, deployment problems, or feature requests (CSV export now fully functional in Chrome):
 
 Recent Fixes:
-- ✅ **CSV Export Chrome Compatibility**: Resolved download issues with robust Blob-based implementation and proper CSV escaping
-- ✅ **Data Format Handling**: Fixed export with legacy and multi-entry schedule formats
-- ✅ **Defensive Programming**: Added array validation to prevent runtime errors
+- **CSV Export Chrome Compatibility**: Resolved download issues with robust Blob-based implementation and proper CSV escaping
+- **Data Format Handling**: Fixed export with legacy and multi-entry schedule formats
+- **Defensive Programming**: Added array validation to prevent runtime errors
 
 1. Check the [Troubleshooting](#troubleshooting) section
 2. Review the [Cloudflare Tunnel Setup](#cloudflare-tunnel-setup)
@@ -474,6 +482,6 @@ Recent Fixes:
 
 ---
 
-**Built with ❤️ using React, TypeScript, shadcn/ui, and Tailwind CSS**
+**Built with React, TypeScript, shadcn/ui, and Tailwind CSS**
 
-*Professional housekeeper scheduling made simple and beautiful.*
+Professional housekeeper scheduling made simple and beautiful.
