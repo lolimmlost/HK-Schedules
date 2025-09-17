@@ -75,6 +75,10 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
       description: initialData?.description || "",
       category: (initialData?.category as any) || 'general',
       date: initialData?.date || "",
+      /**
+       * Default entries: Provide a single valid entry to ensure form is valid on load
+       * Includes required duration field to pass Zod min(1) validation
+       */
       entries: initialData?.entries?.length ? initialData.entries : [{ id: uuidv4(), time: '09:00', duration: 60, task: 'General Task', assignee: 'Unassigned', status: 'pending', recurrence: 'none' }],
       version: '2.0',
       recurrence: (initialData?.recurrence as any) || 'none',
@@ -86,11 +90,11 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
     name: "entries",
   })
 
+  /**
+   * Handles form submission by processing data and calling the parent onSubmit handler
+   * Converts any string durations to numbers and resets form after submission
+   */
   const onSubmitForm = (data: Schedule) => {
-    console.log('🔍 Form - onSubmitForm called with data:', data)
-    console.log('🔍 Form - formState.isValid:', form.formState.isValid)
-    console.log('🔍 Form - formState.errors:', form.formState.errors)
-    
     // Convert duration string to number if needed
     const processedData = {
       ...data,
@@ -99,7 +103,6 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
         duration: typeof entry.duration === 'string' ? parseInt(entry.duration) : entry.duration,
       })),
     }
-    console.log('🔍 Form - processedData:', processedData)
     onSubmit(processedData)
     form.reset()
   }
