@@ -92,12 +92,15 @@ export const useScheduleStore = create<ScheduleState>()(
         const result = scheduleSchema.safeParse(schedule)
         if (!result.success) {
           console.error('Zod validation failed for addSchedule:', result.error.errors)
+          console.error('Full error details:', result.error.format())
           throw new Error(`Invalid schedule data: ${result.error.errors.map((e: { message: string }) => e.message).join(', ')}`)
         }
+        console.log('🔍 Store - Zod validation passed')
         if (!validateScheduleEntries(schedule)) {
           console.error('Enhanced validation failed: Invalid schedule add')
           throw new Error('Invalid schedule data')
         }
+        console.log('🔍 Store - Enhanced validation passed')
         set((state: ScheduleState) => ({ schedules: [...state.schedules, schedule] }))
         console.log('🔍 Store - schedule added successfully')
       },
