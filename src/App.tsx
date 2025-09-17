@@ -59,17 +59,17 @@ function App() {
         const hasDurationColumn = firstLineParts.some(p => p.toLowerCase().includes('duration'))
         const colCount = firstLineParts.length
 
-        // Legacy v1: Has "End" but no "Duration", typically 5 columns
+        // Legacy v1: Has "End" but no "Duration", typically 4-6 columns
         if (hasEndColumn && !hasDurationColumn && colCount >= 4 && colCount <= 6) {
           isLegacyFormat = true
           console.log('🔍 App - Detected legacy v1 CSV format')
           startIndex = 1 // Skip header
         }
-        // v2: Has "Duration", >=6 columns, specific headers
+        // v2: Has "Duration", >=6 columns, case-insensitive header matching
         else if (colCount >= 6 &&
-            firstLineParts[0].toLowerCase() === 'housekeeper' &&
-            firstLineParts[2].toLowerCase() === 'date' &&
-            firstLineParts[3].toLowerCase().includes('start') &&
+            firstLineParts.some(p => p.toLowerCase().includes('housekeeper') || p.toLowerCase().includes('name')) &&
+            firstLineParts.some(p => p.toLowerCase().includes('date')) &&
+            firstLineParts.some(p => p.toLowerCase().includes('start') || p.toLowerCase().includes('time')) &&
             hasDurationColumn) {
           startIndex = 1
           console.log('🔍 App - Detected v2 CSV format')
@@ -100,8 +100,14 @@ function App() {
           endTime = parts[3]
           tasks = parts.slice(4).join(', ')
           
-          if (!housekeeper || !startTime || !endTime || housekeeper.toLowerCase().includes('name')) {
-            console.warn(`🔍 App - Skipping legacy row ${i}: invalid data`, {housekeeper, startTime, endTime})
+          // Skip header-like rows but be less strict for older data
+          if (!housekeeper || !startTime || !endTime) {
+            console.warn(`🔍 App - Skipping legacy row ${i}: missing required fields`, {housekeeper, startTime, endTime})
+            skippedCount++
+            continue
+          }
+          if (housekeeper.toLowerCase().includes('housekeeper') || housekeeper.toLowerCase().includes('name')) {
+            console.log(`🔍 App - Skipping legacy row ${i}: likely header`, housekeeper)
             skippedCount++
             continue
           }
@@ -114,7 +120,7 @@ function App() {
 
             // Convert to v2 structure
             const newSchedule: Schedule = {
-              id: Date.now().toString() + importedCount++,
+              id: uuidv4(),
               title: assignee,
               category: 'housekeeping' as const,
               description: tasks || 'Imported legacy schedule',
@@ -151,22 +157,47 @@ function App() {
           durationStr = parts[4]
           tasks = parts.slice(5).join(', ')
 
-          if (housekeeper && startTime && !housekeeper.toLowerCase().includes('housekeeper')) {
+          // Skip obvious header rows for v2
+          if (housekeeper?.toLowerCase().includes('housekeeper') || housekeeper?.toLowerCase().includes('name')) {
+            console.log(`🔍 App - Skipping v2 row ${i}: likely header`, housekeeper)
+            skippedCount++
+            continue
+          }
+
+          if (housekeeper && startTime && date) {
+            // Validate time format (HH:MM), more flexible for older data
+            const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
+            if (!timeRegex.test(startTime)) {
+              console.warn(`🔍 App - Skipping v2 row ${i}: invalid time format`, startTime)
+              skippedCount++
+              continue
+            }
+
             try {
-              // Parse duration like "1h" or "2.5h"
+              // Parse duration like "1h" or "2.5h", fallback to 60 min, handle older numeric formats
               let durationHours = 1 // default
               if (durationStr) {
-                const durationMatch = durationStr.match(/(\d+(?:\.\d+)?)h/)
+                const durationMatch = durationStr.match(/(\d+(?:\.\d+)?)(h|hr|hours?)/i)
                 if (durationMatch) {
                   durationHours = parseFloat(durationMatch[1])
+                } else if (!isNaN(parseFloat(durationStr))) {
+                  // If numeric, assume hours (common in older CSVs)
+                  durationHours = parseFloat(durationStr)
+                } else if (durationStr.toLowerCase().includes('min') || durationStr.toLowerCase().includes('m')) {
+                  // Parse minutes
+                  const minMatch = durationStr.match(/(\d+(?:\.\d+)?)(min|m)/i)
+                  if (minMatch) {
+                    const durationMins = parseFloat(minMatch[1])
+                    durationHours = durationMins / 60
+                  }
                 }
               }
 
-              const durationMinutes = durationHours * 60
+              const durationMinutes = Math.max(1, Math.round(durationHours * 60)) // At least 1 min, round to whole
 
               // Convert to v2 structure
               const newSchedule: Schedule = {
-                id: Date.now().toString() + importedCount++,
+                id: uuidv4(),
                 title: assignee || housekeeper,
                 category: 'housekeeping' as const,
                 description: tasks || 'Imported schedule',
@@ -185,12 +216,14 @@ function App() {
               }
               
               addSchedule(newSchedule)
+              importedCount++
               console.log('🔍 App - imported v2 schedule:', newSchedule.title, 'Duration:', durationMinutes + 'm')
             } catch (error) {
               console.warn('🔍 App - failed to import v2 schedule:', housekeeper, error)
               skippedCount++
             }
           } else {
+            console.warn(`🔍 App - Skipping v2 row ${i}: missing required fields`, {housekeeper, startTime, date})
             skippedCount++
           }
         }
@@ -198,8 +231,8 @@ function App() {
 
       event.target.value = ''
       const message = isLegacyFormat
-        ? `${importedCount} legacy schedules imported successfully. ${skippedCount > 0 ? `${skippedCount} rows skipped (invalid data).` : ''}`
-        : `${importedCount} schedules imported successfully.${skippedCount > 0 ? ` ${skippedCount} rows skipped.` : ''}`
+        ? `${importedCount} legacy schedules imported successfully${skippedCount > 0 ? `. ${skippedCount} rows skipped (invalid data).` : '.'}`
+        : `${importedCount} schedules imported successfully${skippedCount > 0 ? `. ${skippedCount} rows skipped.` : '.'}`
       alert(message)
       console.log(`🔍 App - Import complete: ${importedCount} imported, ${skippedCount} skipped`)
     }
@@ -530,6 +563,7 @@ function App() {
           schedules={viewMode === 'view' && selectedSchedule ? [selectedSchedule] : schedules}
           companyName="Housekeeper Services"
           printedAt={new Date()}
+          isSingleSchedule={viewMode === 'view' && !!selectedSchedule}
         />
       </div>
     </div>

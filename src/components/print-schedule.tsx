@@ -11,9 +11,10 @@ interface PrintScheduleProps {
   companyName?: string
   printedAt?: Date
   className?: string
+  isSingleSchedule?: boolean // New prop to indicate single schedule preview
 }
 
-export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeeper Services", printedAt = new Date(), className }: PrintScheduleProps) {
+export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeeper Services", printedAt = new Date(), className, isSingleSchedule = false }: PrintScheduleProps) {
   // Defensive check for schedules - ensure it's always an array to prevent reduce errors
   let safeSchedules: Schedule[] = []
   if (Array.isArray(schedules)) {
@@ -38,6 +39,8 @@ export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeep
 
   const rootClassName = `max-w-4xl mx-auto p-8 print:p-0 print:bg-white print:pt-4 ${className || ''}`
 
+  const isSingle = filteredSchedules.length === 1 || isSingleSchedule
+
   // Calculate total duration from entries
   const totalDuration = filteredEntries.reduce((total, entry) => total + (entry.duration * 60 * 1000), 0)
 
@@ -58,60 +61,52 @@ export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeep
 
   return (
     <div className={rootClassName}>
-      {/* Header */}
-      <div className="text-center mb-8 print:mb-6 print:pb-4">
-        <h1 className="text-3xl font-bold text-foreground mb-2 print:text-3xl print:mb-4">
+      {/* Header - Simplified for single schedule */}
+      <div className="text-center mb-6 print:mb-4 print:pb-2">
+        <h1 className="text-2xl font-bold text-foreground mb-1 print:text-2xl print:mb-2">
           {companyName}
         </h1>
-        <p className="text-lg text-muted-foreground mb-4 print:text-lg print:mb-2">
-          {housekeeper ? `${housekeeper}'s ` : ''}Housekeeper Schedule
+        <p className="text-base text-muted-foreground mb-3 print:text-base print:mb-1">
+          {housekeeper ? `${housekeeper}'s ` : ''}{isSingle ? 'Schedule Preview' : 'Housekeeper Schedule'}
         </p>
-        <div className="border-t pt-4 print:border-t print:pt-4 print:border-black">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm print:text-sm">
-            <div>
-              <div className="font-medium">Printed on:</div>
-              <div>{printedAt.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}</div>
-            </div>
-            <div>
-              <div className="font-medium">Time:</div>
-              <div>{printedAt.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}</div>
-            </div>
-            <div className="md:col-span-2">
-              <div className="font-medium">Total Assignments:</div>
-              <div className="text-lg font-semibold">{filteredEntries.length}</div>
-            </div>
-            {totalHours > 0 && (
-              <div className="md:col-span-2">
-                <div className="font-medium">Total Duration:</div>
-                <div className="text-lg font-semibold">{totalHours}h {totalMinutes}m</div>
+        {!isSingle && (
+          <div className="border-t pt-3 print:border-t print:pt-3 print:border-black">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm print:text-xs print:gap-2">
+              <div>
+                <div className="font-medium">Printed on:</div>
+                <div className="print:text-xs">{printedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
               </div>
-            )}
+              <div>
+                <div className="font-medium">Time:</div>
+                <div className="print:text-xs">{printedAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</div>
+              </div>
+              <div className="md:col-span-2">
+                <div className="font-medium">Total Assignments:</div>
+                <div className="text-base font-semibold print:text-sm">{filteredEntries.length}</div>
+              </div>
+              {totalHours > 0 && (
+                <div className="md:col-span-2">
+                  <div className="font-medium">Total Duration:</div>
+                  <div className="text-base font-semibold print:text-sm">{totalHours}h {totalMinutes}m</div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Schedule Table */}
       <div className="space-y-6 print:space-y-0">
         <Card className="print:border print:shadow-none print:bg-transparent print:mb-0">
-          <CardHeader className="pb-4 print:border-b print:pb-4 print:pt-0 print:border-black">
-            <div className="flex items-center gap-2 print:mb-2">
-              <Calendar className="h-5 w-5" />
-              <CardTitle className="text-xl print:text-xl">Individual Schedule</CardTitle>
+          <CardHeader className={`pb-3 print:pb-2 print:pt-0 print:border-b print:border-black ${isSingle ? 'print:pb-1' : ''}`}>
+            <div className="flex items-center gap-1.5 print:mb-1 print:gap-1">
+              <Calendar className="h-4 w-4 print:h-3 print:w-3" />
+              <CardTitle className={`text-lg print:text-sm ${isSingle ? 'print:text-base' : ''}`}>
+                {isSingle ? 'Schedule Details' : 'Individual Schedule'}
+              </CardTitle>
             </div>
-            <p className="text-sm text-muted-foreground print:text-sm print:font-normal">
-              Assignments for {housekeeper || 'team'} - {printedAt.toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric'
-              })}
+            <p className={`text-xs text-muted-foreground print:text-xs ${isSingle ? 'print:hidden' : ''}`}>
+              Assignments for {housekeeper || 'team'}{!isSingle && ` - ${printedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
             </p>
           </CardHeader>
           <CardContent className="pt-0 print:p-0">
@@ -119,19 +114,21 @@ export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeep
               <table className="w-full border-collapse print:border print:border-black">
                 <thead>
                   <tr className="border-b print:border-t print:border-b print:border-black bg-muted/50 print:bg-gray-100 print:sticky top-0 print:z-10">
-                    <th className="border border-gray-300 print:border-black p-3 text-left font-semibold print:text-xs print:p-2">
-                      Unit/Task
+                    <th className={`border border-gray-300 print:border-black p-2.5 text-left font-semibold print:text-xs print:p-1.5 ${isSingle ? 'print:w-1/5' : ''}`}>
+                      Task
                     </th>
-                    <th className="border border-gray-300 print:border-black p-3 text-center font-semibold print:text-xs print:p-2">
-                      Time Slot
+                    <th className={`border border-gray-300 print:border-black p-2.5 text-center font-semibold print:text-xs print:p-1.5 ${isSingle ? 'print:w-1/5' : ''}`}>
+                      Time
                     </th>
-                    <th className="border border-gray-300 print:border-black p-3 text-center font-semibold print:text-xs print:p-2">
+                    <th className={`border border-gray-300 print:border-black p-2.5 text-center font-semibold print:text-xs print:p-1.5 ${isSingle ? 'print:w-1/5' : ''}`}>
                       Duration
                     </th>
-                    <th className="border border-gray-300 print:border-black p-3 text-center font-semibold print:text-xs print:p-2">
-                      Status
-                    </th>
-                    <th className="border border-gray-300 print:border-black p-3 text-left font-semibold print:text-xs print:p-2">
+                    {!isSingle && (
+                      <th className="border border-gray-300 print:border-black p-2.5 text-center font-semibold print:text-xs print:p-1.5 print:w-1/5">
+                        Status
+                      </th>
+                    )}
+                    <th className={`border border-gray-300 print:border-black p-2.5 text-left font-semibold print:text-xs print:p-1.5 ${isSingle ? 'print:w-2/5' : 'print:w-1/5'}`}>
                       Notes
                     </th>
                   </tr>
@@ -142,39 +139,41 @@ export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeep
                       key={entry.id}
                       className={`border-b print:border-b print:border-black ${index % 2 === 0 ? 'bg-background' : 'bg-muted/50 print:bg-gray-50'}`}
                     >
-                      {/* Unit/Task */}
-                      <td className="border border-gray-300 print:border-black p-3 print:p-2 max-w-xs">
-                        <span className="break-words print:text-xs">{entry.task}</span>
+                      {/* Task */}
+                      <td className={`border border-gray-300 print:border-black p-2.5 print:p-1.5 max-w-xs ${isSingle ? 'print:max-w-none' : ''}`}>
+                        <span className="break-words text-sm print:text-xs">{entry.task}</span>
                       </td>
 
-                      {/* Time Slot */}
-                      <td className="border border-gray-300 print:border-black p-3 text-center print:p-2 print:text-xs">
-                        <div className="font-medium">
+                      {/* Time */}
+                      <td className="border border-gray-300 print:border-black p-2.5 text-center print:p-1.5 print:text-xs">
+                        <div className="font-medium text-sm print:text-xs">
                           {entry.time}
                         </div>
                       </td>
 
                       {/* Duration */}
-                      <td className="border border-gray-300 print:border-black p-3 text-center print:p-2 print:text-xs">
-                        <Badge variant="secondary" className="text-xs print:text-xs">
-                          {entry.duration} min
+                      <td className="border border-gray-300 print:border-black p-2.5 text-center print:p-1.5 print:text-xs">
+                        <Badge variant="secondary" className="text-xs print:text-[10px] px-1.5 py-0.5">
+                          {Math.round((entry.duration || 0) / 60)} min
                         </Badge>
                       </td>
 
-                      {/* Status Checkbox */}
-                      <td className="border border-gray-300 print:border-black p-3 text-center print:p-2">
-                        <input
-                          type="checkbox"
-                          checked={entry.status === 'completed'}
-                          disabled
-                          className="print:scale-125 print:mx-auto"
-                        />
-                      </td>
+                      {/* Status - Hide for single schedule */}
+                      {!isSingle && (
+                        <td className="border border-gray-300 print:border-black p-2.5 text-center print:p-1.5 print:text-xs">
+                          <input
+                            type="checkbox"
+                            checked={entry.status === 'completed'}
+                            disabled
+                            className="print:scale-110 print:mx-auto"
+                          />
+                        </td>
+                      )}
 
                       {/* Notes */}
-                      <td className="border border-gray-300 print:border-black p-3 print:p-2 max-w-md">
-                        <div className="text-sm print:text-xs">
-                          {entry.notes || 'N/A'}
+                      <td className={`border border-gray-300 print:border-black p-2.5 print:p-1.5 max-w-md ${isSingle ? 'print:max-w-none' : ''}`}>
+                        <div className={`text-sm print:text-xs ${isSingle ? 'print:text-[11px]' : ''}`}>
+                          {entry.notes ? entry.notes : (isSingle ? '' : 'N/A')}
                         </div>
                       </td>
                     </tr>
@@ -185,34 +184,28 @@ export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeep
           </CardContent>
         </Card>
 
-        {/* Summary Footer */}
-        {safeSchedules.length > 0 && (
-          <div className="mt-8 pt-6 border-t print:mt-6 print:pt-4 print:border-t print:border-black">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:flex-row print:items-center print:justify-between print:gap-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground print:text-base print:gap-4">
-                <div className="flex items-center gap-2 print:gap-1">
-                  <Clock className="h-4 w-4 print:h-3 print:w-3" />
-                  <span>Total schedules: <span className="font-medium">{safeSchedules.length}</span></span>
+        {/* Summary Footer - Hide for single schedule */}
+        {!isSingle && safeSchedules.length > 0 && (
+          <div className="mt-6 pt-4 border-t print:mt-4 print:pt-2 print:border-t print:border-black">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 print:flex-row print:items-center print:justify-between print:gap-1">
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground print:text-sm print:gap-2">
+                <div className="flex items-center gap-1 print:gap-0.5">
+                  <Clock className="h-3 w-3 print:h-2.5 print:w-2.5" />
+                  <span className="text-xs print:text-xs">Total schedules: <span className="font-medium">{safeSchedules.length}</span></span>
                 </div>
                 {totalHours > 0 && (
-                  <div className="flex items-center gap-2 print:gap-1">
-                    <Clock className="h-4 w-4 print:h-3 print:w-3" />
-                    <span>Total duration: <span className="font-medium">{totalHours}h {totalMinutes}m</span></span>
+                  <div className="flex items-center gap-1 print:gap-0.5">
+                    <Clock className="h-3 w-3 print:h-2.5 print:w-2.5" />
+                    <span className="text-xs print:text-xs">Total duration: <span className="font-medium">{totalHours}h {totalMinutes}m</span></span>
                   </div>
                 )}
               </div>
-              <div className="text-right print:text-left print:text-sm">
-                <p className="font-medium print:font-semibold">
+              <div className="text-right print:text-left print:text-xs">
+                <p className="font-medium text-xs print:font-medium">
                   Prepared by: Housekeeper Schedule Manager
                 </p>
-                <p className="text-xs text-muted-foreground print:text-sm">
-                  Printed: {printedAt.toLocaleString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
+                <p className="text-xs text-muted-foreground print:text-xs">
+                  Printed: {printedAt.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
             </div>
@@ -224,18 +217,16 @@ export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeep
         {`
           @media print {
             @page {
-              margin: 0.5in;
+              margin: 0.25in;
               size: A4 portrait;
-              margin-top: 0.75in;
-              margin-bottom: 0.75in;
             }
             
             body {
               -webkit-print-color-adjust: exact !important;
               color-adjust: exact !important;
               font-family: Arial, sans-serif;
-              font-size: 10pt;
-              line-height: 1.3;
+              font-size: 9pt;
+              line-height: 1.2;
               width: 210mm;
               max-width: 210mm;
             }
@@ -250,7 +241,7 @@ export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeep
             }
             
             table {
-              font-size: 9pt;
+              font-size: 8pt;
               width: 100%;
               page-break-inside: auto;
               border-collapse: collapse;
@@ -263,7 +254,7 @@ export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeep
             th, td {
               page-break-inside: avoid;
               border: 1px solid black !important;
-              padding: 0.4em 0.3em;
+              padding: 0.3em 0.2em;
               vertical-align: top;
               word-wrap: break-word;
             }
@@ -305,9 +296,9 @@ export function PrintSchedule({ schedules, housekeeper, companyName = "Housekeep
               display: block !important;
             }
 
-            /* For 130+ units: smaller font if needed */
-            tbody tr:nth-child(n+31) {
-              font-size: 8pt;
+            /* For 130+ units: even smaller font */
+            tbody tr:nth-child(n+51) {
+              font-size: 7pt;
             }
           }
         `}
