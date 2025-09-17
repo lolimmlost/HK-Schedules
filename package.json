@@ -9,7 +9,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "start": "node server.js",
-    "test": "vitest run src/**/*.{test,spec}.ts",
+    "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:e2e": "playwright test"
