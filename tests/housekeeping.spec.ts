@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Housekeeping Workflow E2E', () => {
   test('full housekeeping workflow', async ({ page }) => {
-    await page.goto('http://10.0.0.30:3001') // Assume dev server
+    await page.goto('/') // Use baseURL from config
     await page.waitForLoadState('networkidle') // Wait for app to load
 
     // Debug: Screenshot initial load
@@ -42,7 +42,7 @@ test.describe('Housekeeping Workflow E2E', () => {
   })
 
   test('large dataset', async ({ page }) => {
-    await page.goto('http://10.0.0.30:3001')
+    await page.goto('/')
     await page.waitForLoadState('networkidle')
 
     // Debug: Screenshot initial load
