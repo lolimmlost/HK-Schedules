@@ -68,15 +68,19 @@ describe('useScheduleStore', () => {
   })
 
   it('warns for large schedule >130 entries', () => {
-    const largeEntries = Array.from({ length: 131 }, (_, i) => ({
-      id: uuidv4(),
-      time: `0${Math.floor(i / 10)}:${(i % 10) * 6}:00`,
-      duration: 60,
-      task: `Task ${i}`,
-      assignee: 'John',
-      status: 'pending' as const,
-      recurrence: 'none' as const
-    }))
+    const largeEntries = Array.from({ length: 131 }, (_, i) => {
+      const hour = Math.floor(i / 10);
+      const minute = (i % 10) * 6;
+      return {
+        id: uuidv4(),
+        time: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`,
+        duration: 60,
+        task: `Task ${i}`,
+        assignee: 'John',
+        status: 'pending' as const,
+        recurrence: 'none' as const
+      }
+    })
 
     const schedule: Schedule = {
       id: 'large',

@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
 import { getDuration } from './utils'
 import type { Schedule, Entry } from '@/components/schedule-form'
-import { scheduleSchema } from '@/components/schedule-form'
+import { scheduleSchema } from '../components/schedule-form'
 
 export interface ScheduleState {
   schedules: Schedule[]

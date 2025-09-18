@@ -1,12 +1,12 @@
 // Dynamic Schedule Form with react-hook-form, Zod validation, and entry arrays
 import * as React from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "./ui/button"
+import { Input } from "./ui/input"
+import { Label } from "./ui/label"
+import { Textarea } from "./ui/textarea"
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { Alert, AlertDescription } from "./ui/alert"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { User, Calendar, List, Plus, Trash2, PlusCircle } from "lucide-react"
 
 import { useForm, useFieldArray } from "react-hook-form"
@@ -26,7 +26,7 @@ export interface Entry {
 }
 
 export const entrySchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().or(z.string().min(1, "ID required")),
   time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
   duration: z.number().min(1, "Duration must be at least 1 minute").max(480, "Duration max 8 hours"),
   task: z.string().min(1, "Task required").max(200, "Task max 200 chars"),
@@ -37,7 +37,7 @@ export const entrySchema = z.object({
 })
 
 export const scheduleSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().or(z.string().min(1, "Entry ID required")),
   title: z.string().min(1, "Title required").max(100, "Title max 100 chars"),
   description: z.string().max(500, "Description max 500 chars").optional(),
   category: z.enum(['general', 'housekeeping', 'maintenance', 'other']).default('general'),
@@ -177,7 +177,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
 
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Select onValueChange={(value) => form.setValue("category", value as any)} defaultValue={form.watch("category")}>
+              <Select onValueChange={(value: string) => form.setValue("category", value as "general" | "housekeeping" | "maintenance" | "other")} defaultValue={form.watch("category")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -304,7 +304,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
 
                     <div className="space-y-2">
                       <Label>Status</Label>
-                      <Select onValueChange={(value) => form.setValue(`entries.${index}.status` as const, value as any)} defaultValue={form.watch(`entries.${index}.status`) || 'pending'}>
+                      <Select onValueChange={(value: string) => form.setValue(`entries.${index}.status` as const, value as "pending" | "completed")} defaultValue={form.watch(`entries.${index}.status`) || 'pending'}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
@@ -319,7 +319,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Recurrence</Label>
-                      <Select onValueChange={(value) => form.setValue(`entries.${index}.recurrence` as const, value as any)} defaultValue={form.watch(`entries.${index}.recurrence`) || 'none'}>
+                      <Select onValueChange={(value: string) => form.setValue(`entries.${index}.recurrence` as const, value as "none" | "daily" | "weekly" | "monthly")} defaultValue={form.watch(`entries.${index}.recurrence`) || 'none'}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select recurrence" />
                         </SelectTrigger>
