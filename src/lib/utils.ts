@@ -7,11 +7,21 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatDate(dateString?: string): string {
   if (!dateString) return "No date"
-  return new Date(dateString).toLocaleDateString('en-US', {
+  
+  // Extract date part (YYYY-MM-DD) from various formats
+  const dateMatch = dateString.match(/(\d{4})-(\d{2})-(\d{2})/)
+  if (!dateMatch) return "Invalid Date"
+  
+  const [, year, month, day] = dateMatch
+  const date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)))
+  if (isNaN(date.getTime())) return "Invalid Date"
+  
+  return date.toLocaleDateString('en-US', {
     weekday: 'short',
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
+    timeZone: 'UTC'
   })
 }
 

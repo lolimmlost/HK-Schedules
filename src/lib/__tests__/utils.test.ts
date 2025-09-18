@@ -12,7 +12,7 @@ describe('formatDate', () => {
 
   it('formats valid date correctly', () => {
     const testDate = '2023-10-15'
-    expect(formatDate(testDate)).toBe('Sat, Oct 14, 2023')
+    expect(formatDate(testDate)).toBe('Sun, Oct 15, 2023')
   })
 
   it('handles date strings in different formats', () => {
@@ -25,7 +25,7 @@ describe('formatDate', () => {
 
   it('uses en-US locale formatting', () => {
     const testDate = '2023-12-25'
-    expect(formatDate(testDate)).toBe('Sun, Dec 24, 2023')
+    expect(formatDate(testDate)).toBe('Mon, Dec 25, 2023')
   })
 })
 
