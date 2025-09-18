@@ -37,9 +37,6 @@ jobs:
     - name: Start dev server
       run: |
         npm run dev &
-        # Install wait-on if not present
-        npm i -D wait-on || true
-        npx wait-on http://localhost:3000 --timeout 30000 || sleep 10
     
     - name: Run E2E tests
       run: npm run test:e2e
