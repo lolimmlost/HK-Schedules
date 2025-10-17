@@ -1,4 +1,4 @@
-// Dynamic Schedule Form with react-hook-form, Zod validation, and entry arrays
+// Weekly Schedule Form with day-of-week selection
 import * as React from 'react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
@@ -7,126 +7,30 @@ import { Textarea } from './ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Alert, AlertDescription } from './ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { User, Calendar, List, Plus, Trash2, PlusCircle } from 'lucide-react'
+import { User, Calendar, List, Plus, Trash2, PlusCircle, Clock } from 'lucide-react'
 
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { v4 as uuidv4 } from 'uuid'
+import { DayOfWeek, scheduleSchema, type Schedule } from './schedule-form'
 
-export interface Entry {
-  id: string
-  time: string
-  duration: number // minutes
-  task: string
-  assignee: string
-  status: 'pending' | 'completed'
-  notes?: string
-  recurrence?: 'none' | 'daily' | 'weekly' | 'monthly'
-}
+const DAYS_OF_WEEK: { value: DayOfWeek; label: string }[] = [
+  { value: 'monday', label: 'Monday' },
+  { value: 'tuesday', label: 'Tuesday' },
+  { value: 'wednesday', label: 'Wednesday' },
+  { value: 'thursday', label: 'Thursday' },
+  { value: 'friday', label: 'Friday' },
+  { value: 'saturday', label: 'Saturday' },
+  { value: 'sunday', label: 'Sunday' },
+]
 
-export type DayOfWeek =
-  | 'monday'
-  | 'tuesday'
-  | 'wednesday'
-  | 'thursday'
-  | 'friday'
-  | 'saturday'
-  | 'sunday'
-
-export interface WeeklyScheduleEntry {
-  id: string
-  dayOfWeek: DayOfWeek
-  time: string
-  duration: number // minutes
-  task: string
-  assignee: string
-  status: 'pending' | 'completed'
-  notes?: string
-  recurrence?: 'none' | 'daily' | 'weekly' | 'monthly'
-}
-
-export const entrySchema = z.object({
-  id: z.string().uuid().or(z.string().min(1, 'ID required')),
-  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
-  duration: z
-    .number()
-    .min(1, 'Duration must be at least 1 minute')
-    .max(480, 'Duration max 8 hours'),
-  task: z.string().min(1, 'Task required').max(200, 'Task max 200 chars'),
-  assignee: z.string().min(1, 'Assignee required'),
-  status: z.enum(['pending', 'completed']).default('pending'),
-  notes: z.string().max(300, 'Notes max 300 chars').optional(),
-  recurrence: z.enum(['none', 'daily', 'weekly', 'monthly']).default('none'),
-})
-
-export const weeklyEntrySchema = z.object({
-  id: z.string().uuid().or(z.string().min(1, 'ID required')),
-  dayOfWeek: z.enum(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']),
-  time: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
-  duration: z
-    .number()
-    .min(1, 'Duration must be at least 1 minute')
-    .max(480, 'Duration max 8 hours'),
-  task: z.string().min(1, 'Task required').max(200, 'Task max 200 chars'),
-  assignee: z.string().min(1, 'Assignee required'),
-  status: z.enum(['pending', 'completed']).default('pending'),
-  notes: z.string().max(300, 'Notes max 300 chars').optional(),
-  recurrence: z.enum(['none', 'daily', 'weekly', 'monthly']).default('none'),
-})
-
-export const scheduleSchema = z
-  .object({
-    id: z.string().uuid().or(z.string().min(1, 'Entry ID required')),
-    title: z.string().min(1, 'Title required').max(100, 'Title max 100 chars'),
-    description: z.string().max(500, 'Description max 500 chars').optional(),
-    category: z.enum(['general', 'housekeeping', 'maintenance', 'other']).default('general'),
-    date: z.string().optional(),
-    entries: z.array(entrySchema).optional(),
-    version: z.string().default('2.0'),
-    recurrence: z.enum(['none', 'daily', 'weekly', 'monthly']).default('none'),
-    scheduleType: z.enum(['date-specific', 'weekly']).default('date-specific'),
-    // Weekly schedule specific fields
-    weeklyEntries: z.array(weeklyEntrySchema).optional(),
-    // Legacy properties (optional for backward compatibility)
-    name: z.string().optional(),
-    start: z.string().optional(),
-    end: z.string().optional(),
-    tasks: z.string().optional(),
-  })
-  .refine(
-    (data) => {
-      // For date-specific schedules, entries must exist and have no time overlaps
-      if (data.scheduleType === 'date-specific') {
-        if (!data.entries || data.entries.length === 0) return false
-        const times = data.entries.map((e) => e.time)
-        const uniqueTimes = new Set(times)
-        return times.length === uniqueTimes.size
-      }
-      // For weekly schedules, weeklyEntries must exist and have no day/time overlaps
-      if (data.scheduleType === 'weekly') {
-        if (!data.weeklyEntries || data.weeklyEntries.length === 0) return false
-        const dayTimes = data.weeklyEntries.map((e) => `${e.dayOfWeek}-${e.time}`)
-        const uniqueDayTimes = new Set(dayTimes)
-        return dayTimes.length === uniqueDayTimes.size
-      }
-      return false
-    },
-    {
-      message: 'Schedule times must be unique (no overlaps)',
-      path: ['entries'] as any,
-    }
-  )
-
-export type Schedule = z.infer<typeof scheduleSchema>
-
-interface ScheduleFormProps {
+interface WeeklyScheduleFormProps {
   initialData?: Partial<Schedule>
   onSubmit: (data: Schedule) => void
   onCancel?: () => void
 }
 
-export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormProps) {
+export function WeeklyScheduleForm({ initialData, onSubmit, onCancel }: WeeklyScheduleFormProps) {
   const isEditing = !!initialData?.id
 
   const form = useForm<Schedule>({
@@ -136,98 +40,99 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
       title: initialData?.title || '',
       description: initialData?.description || '',
       category: (initialData?.category as any) || 'general',
-      date: initialData?.date || '',
-      /**
-       * Default entries: Provide a single valid entry to ensure form is valid on load
-       * Includes required duration field to pass Zod min(1) validation
-       */
-      entries: initialData?.entries?.length
-        ? initialData.entries
+      scheduleType: 'weekly' as const,
+      weeklyEntries: initialData?.weeklyEntries?.length
+        ? initialData.weeklyEntries
         : [
             {
               id: uuidv4(),
+              dayOfWeek: 'monday' as DayOfWeek,
               time: '09:00',
               duration: 60,
               task: 'General Task',
               assignee: 'Unassigned',
-              status: 'pending',
-              recurrence: 'none',
+              status: 'pending' as const,
+              recurrence: 'none' as const,
             },
           ],
       version: '2.0',
       recurrence: (initialData?.recurrence as any) || 'none',
+      entries: [], // Empty for weekly schedules
+      date: '', // Not used for weekly schedules
     },
   })
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: 'entries',
+    name: 'weeklyEntries',
   })
 
-  /**
-   * Handles form submission by processing data and calling the parent onSubmit handler
-   * Converts any string durations to numbers and resets form after submission
-   */
   const onSubmitForm = (data: Schedule) => {
-    // Convert duration string to number if needed
+    // Process weekly entries
     const processedData = {
       ...data,
-      entries: data.entries?.map((entry) => ({
-        ...entry,
-        duration: typeof entry.duration === 'string' ? parseInt(entry.duration) : entry.duration,
-      })),
+      weeklyEntries:
+        data.weeklyEntries?.map((entry) => ({
+          ...entry,
+          duration: typeof entry.duration === 'string' ? parseInt(entry.duration) : entry.duration,
+        })) || [],
+      entries: [], // Clear date-specific entries for weekly schedules
     }
     onSubmit(processedData)
     form.reset()
   }
 
-  const addEntry = () => {
+  const addWeeklyEntry = () => {
     append({
       id: uuidv4(),
+      dayOfWeek: 'monday' as DayOfWeek,
       time: '09:00',
       duration: 60,
       task: 'General Task',
       assignee: 'Unassigned',
-      status: 'pending',
-      recurrence: 'none',
+      status: 'pending' as const,
+      recurrence: 'none' as const,
     })
   }
 
-  const watchEntries = form.watch('entries') || []
-  const hasEntries = watchEntries.length > 0
+  const watchWeeklyEntries = form.watch('weeklyEntries')
+  const hasWeeklyEntries = watchWeeklyEntries && watchWeeklyEntries.length > 0
 
   React.useEffect(() => {
     if (isEditing && initialData) {
       try {
         form.reset({
           ...initialData,
-          entries: initialData.entries || [],
+          weeklyEntries: initialData.weeklyEntries || [],
           title: initialData.title || '',
           category: initialData.category || 'general',
           recurrence: initialData.recurrence || 'none',
+          scheduleType: 'weekly',
         })
       } catch (error) {
         console.error('Form reset error:', error)
-        // Fallback to empty form
         form.reset({
           id: uuidv4(),
           title: '',
           description: '',
           category: 'general',
-          date: '',
-          entries: [
+          scheduleType: 'weekly' as const,
+          weeklyEntries: [
             {
               id: uuidv4(),
+              dayOfWeek: 'monday' as DayOfWeek,
               time: '09:00',
               duration: 60,
               task: 'General Task',
               assignee: 'Unassigned',
-              status: 'pending',
-              recurrence: 'none',
+              status: 'pending' as const,
+              recurrence: 'none' as const,
             },
           ],
           version: '2.0',
           recurrence: 'none',
+          entries: [],
+          date: '',
         })
       }
     }
@@ -237,19 +142,15 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
     <Card className="w-full max-w-4xl">
       <CardHeader className="space-y-1">
         <div className="flex items-center gap-2">
-          {isEditing ? (
-            <User className="h-5 w-5 text-primary" />
-          ) : (
-            <Plus className="h-5 w-5 text-primary" />
-          )}
+          <Clock className="h-5 w-5 text-primary" />
           <CardTitle className="text-xl">
-            {isEditing ? 'Edit Schedule' : 'Add New Schedule'}
+            {isEditing ? 'Edit Weekly Schedule' : 'Create Weekly Schedule'}
           </CardTitle>
         </div>
         <p className="text-sm text-muted-foreground">
           {isEditing
-            ? 'Update the schedule details below'
-            : 'Fill in the details to create a new schedule with multiple entries'}
+            ? 'Update the weekly schedule details below'
+            : 'Create a recurring weekly schedule by selecting days of the week'}
         </p>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -300,7 +201,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
               id="description"
               {...form.register('description')}
               className={form.formState.errors.description ? 'border-destructive' : ''}
-              placeholder="Optional description for the schedule"
+              placeholder="Optional description for the weekly schedule"
               rows={3}
             />
             {form.formState.errors.description && (
@@ -313,31 +214,31 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="date">
-              <Calendar className="h-4 w-4 inline mr-2" />
-              Date (Optional)
-            </Label>
-            <Input id="date" type="date" {...form.register('date')} />
-          </div>
-
-          {/* Dynamic Entries */}
+          {/* Weekly Entries */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label className="text-lg font-semibold">
-                Schedule Entries <span className="text-destructive">*</span>
+                Weekly Schedule Entries <span className="text-destructive">*</span>
               </Label>
-              <Button type="button" variant="outline" onClick={addEntry} size="sm">
+              <Button type="button" variant="outline" onClick={addWeeklyEntry} size="sm">
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Add Entry
               </Button>
             </div>
 
-            {form.formState.errors.entries && (
+            <Alert>
+              <Calendar className="h-4 w-4" />
+              <AlertDescription>
+                This schedule will repeat every week on the selected days. Times are relative to
+                each selected day.
+              </AlertDescription>
+            </Alert>
+
+            {form.formState.errors.weeklyEntries && (
               <Alert className="border-destructive bg-destructive/10">
                 <List className="h-4 w-4" />
                 <AlertDescription className="text-destructive">
-                  {form.formState.errors.entries.message}
+                  {form.formState.errors.weeklyEntries.message}
                 </AlertDescription>
               </Alert>
             )}
@@ -360,25 +261,57 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>
+                        Day of Week <span className="text-destructive">*</span>
+                      </Label>
+                      <Select
+                        onValueChange={(value: DayOfWeek) =>
+                          form.setValue(`weeklyEntries.${index}.dayOfWeek` as const, value)
+                        }
+                        defaultValue={form.watch(`weeklyEntries.${index}.dayOfWeek`)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select day" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DAYS_OF_WEEK.map((day) => (
+                            <SelectItem key={day.value} value={day.value}>
+                              {day.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {form.formState.errors.weeklyEntries?.[index]?.dayOfWeek && (
+                        <p className="text-sm text-destructive">
+                          {form.formState.errors.weeklyEntries[index]?.dayOfWeek?.message}
+                        </p>
+                      )}
+                    </div>
+
                     <div className="space-y-2">
                       <Label>
                         Time <span className="text-destructive">*</span>
                       </Label>
                       <Input
                         type="time"
-                        {...form.register(`entries.${index}.time` as const)}
+                        {...form.register(`weeklyEntries.${index}.time` as const)}
                         className={
-                          form.formState.errors.entries?.[index]?.time ? 'border-destructive' : ''
+                          form.formState.errors.weeklyEntries?.[index]?.time
+                            ? 'border-destructive'
+                            : ''
                         }
                       />
-                      {form.formState.errors.entries?.[index]?.time && (
+                      {form.formState.errors.weeklyEntries?.[index]?.time && (
                         <p className="text-sm text-destructive">
-                          {form.formState.errors.entries[index]?.time?.message}
+                          {form.formState.errors.weeklyEntries[index]?.time?.message}
                         </p>
                       )}
                     </div>
+                  </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>
                         Duration (minutes) <span className="text-destructive">*</span>
@@ -387,16 +320,18 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
                         type="number"
                         min="1"
                         max="480"
-                        {...form.register(`entries.${index}.duration`, { valueAsNumber: true })}
+                        {...form.register(`weeklyEntries.${index}.duration`, {
+                          valueAsNumber: true,
+                        })}
                         className={
-                          form.formState.errors.entries?.[index]?.duration
+                          form.formState.errors.weeklyEntries?.[index]?.duration
                             ? 'border-destructive'
                             : ''
                         }
                       />
-                      {form.formState.errors.entries?.[index]?.duration && (
+                      {form.formState.errors.weeklyEntries?.[index]?.duration && (
                         <p className="text-sm text-destructive">
-                          {form.formState.errors.entries[index]?.duration?.message}
+                          {form.formState.errors.weeklyEntries[index]?.duration?.message}
                         </p>
                       )}
                     </div>
@@ -406,37 +341,17 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
                         Assignee <span className="text-destructive">*</span>
                       </Label>
                       <Input
-                        {...form.register(`entries.${index}.assignee` as const)}
+                        {...form.register(`weeklyEntries.${index}.assignee` as const)}
                         className={
-                          form.formState.errors.entries?.[index]?.assignee
+                          form.formState.errors.weeklyEntries?.[index]?.assignee
                             ? 'border-destructive'
                             : ''
                         }
                         placeholder="e.g., John Doe"
                       />
-                      {form.formState.errors.entries?.[index]?.assignee && (
+                      {form.formState.errors.weeklyEntries?.[index]?.assignee && (
                         <p className="text-sm text-destructive">
-                          {form.formState.errors.entries[index]?.assignee?.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>
-                        Task <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        {...form.register(`entries.${index}.task` as const)}
-                        className={
-                          form.formState.errors.entries?.[index]?.task ? 'border-destructive' : ''
-                        }
-                        placeholder="e.g., Clean Room 101"
-                      />
-                      {form.formState.errors.entries?.[index]?.task && (
-                        <p className="text-sm text-destructive">
-                          {form.formState.errors.entries[index]?.task?.message}
+                          {form.formState.errors.weeklyEntries[index]?.assignee?.message}
                         </p>
                       )}
                     </div>
@@ -446,11 +361,11 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
                       <Select
                         onValueChange={(value: string) =>
                           form.setValue(
-                            `entries.${index}.status` as const,
+                            `weeklyEntries.${index}.status` as const,
                             value as 'pending' | 'completed'
                           )
                         }
-                        defaultValue={form.watch(`entries.${index}.status`) || 'pending'}
+                        defaultValue={form.watch(`weeklyEntries.${index}.status`) || 'pending'}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select status" />
@@ -465,15 +380,35 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
+                      <Label>
+                        Task <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        {...form.register(`weeklyEntries.${index}.task` as const)}
+                        className={
+                          form.formState.errors.weeklyEntries?.[index]?.task
+                            ? 'border-destructive'
+                            : ''
+                        }
+                        placeholder="e.g., Clean Room 101"
+                      />
+                      {form.formState.errors.weeklyEntries?.[index]?.task && (
+                        <p className="text-sm text-destructive">
+                          {form.formState.errors.weeklyEntries[index]?.task?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
                       <Label>Recurrence</Label>
                       <Select
                         onValueChange={(value: string) =>
                           form.setValue(
-                            `entries.${index}.recurrence` as const,
+                            `weeklyEntries.${index}.recurrence` as const,
                             value as 'none' | 'daily' | 'weekly' | 'monthly'
                           )
                         }
-                        defaultValue={form.watch(`entries.${index}.recurrence`) || 'none'}
+                        defaultValue={form.watch(`weeklyEntries.${index}.recurrence`) || 'none'}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select recurrence" />
@@ -486,28 +421,30 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
 
-                    <div className="space-y-2">
-                      <Label>Notes</Label>
-                      <Textarea
-                        {...form.register(`entries.${index}.notes` as const)}
-                        className={
-                          form.formState.errors.entries?.[index]?.notes ? 'border-destructive' : ''
-                        }
-                        placeholder="Optional notes for this entry"
-                        rows={2}
-                      />
-                      {form.formState.errors.entries?.[index]?.notes && (
-                        <p className="text-sm text-destructive">
-                          {form.formState.errors.entries[index]?.notes?.message}
-                        </p>
-                      )}
-                    </div>
+                  <div className="space-y-2">
+                    <Label>Notes</Label>
+                    <Textarea
+                      {...form.register(`weeklyEntries.${index}.notes` as const)}
+                      className={
+                        form.formState.errors.weeklyEntries?.[index]?.notes
+                          ? 'border-destructive'
+                          : ''
+                      }
+                      placeholder="Optional notes for this entry"
+                      rows={2}
+                    />
+                    {form.formState.errors.weeklyEntries?.[index]?.notes && (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.weeklyEntries[index]?.notes?.message}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}
 
-              {!hasEntries && (
+              {!hasWeeklyEntries && (
                 <Alert>
                   <Plus className="h-4 w-4" />
                   <AlertDescription>No entries yet. Click "Add Entry" to start.</AlertDescription>
@@ -521,7 +458,7 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
             <Button
               type="submit"
               className="flex-1"
-              disabled={form.formState.isSubmitting || !form.formState.isValid || !hasEntries}
+              disabled={form.formState.isSubmitting || !form.formState.isValid || !hasWeeklyEntries}
             >
               {form.formState.isSubmitting ? (
                 <>
@@ -533,12 +470,12 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
                   {isEditing ? (
                     <>
                       <User className="h-4 w-4 mr-2" />
-                      Update Schedule
+                      Update Weekly Schedule
                     </>
                   ) : (
                     <>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Schedule
+                      <Clock className="h-4 w-4 mr-2" />
+                      Create Weekly Schedule
                     </>
                   )}
                 </>

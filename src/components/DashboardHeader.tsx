@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button"
-import { Users, Plus, Download } from "lucide-react"
-import { useCSVExport } from "@/lib/useCSVExport"
-import { Schedule } from "./schedule-form"
+import { Button } from '@/components/ui/button'
+import { Users, Plus, Download } from 'lucide-react'
+import { useCSVExport } from '@/lib/useCSVExport'
+import { Schedule } from './schedule-form'
 
 interface DashboardHeaderProps {
   totalSchedules: number
@@ -10,11 +10,11 @@ interface DashboardHeaderProps {
   schedules: Schedule[]
 }
 
-export function DashboardHeader({ 
-  totalSchedules, 
-  filteredCount, 
-  onAddSchedule, 
-  schedules 
+export function DashboardHeader({
+  totalSchedules,
+  filteredCount,
+  onAddSchedule,
+  schedules,
 }: DashboardHeaderProps) {
   const exportToCSV = useCSVExport()
 
@@ -41,7 +41,9 @@ export function DashboardHeader({
           Add New Schedule
         </Button>
         <div className="text-sm text-muted-foreground">
-          <span>{filteredCount} of {totalSchedules} schedules</span>
+          <span>
+            {filteredCount} of {totalSchedules} schedules
+          </span>
         </div>
       </div>
     </div>

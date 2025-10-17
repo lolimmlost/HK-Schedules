@@ -1,7 +1,7 @@
 import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Upload } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Upload } from 'lucide-react'
 
 interface ImportSectionProps {
   onImport: (event: React.ChangeEvent<HTMLInputElement>) => void
@@ -28,7 +28,8 @@ export function ImportSection({ onImport }: ImportSectionProps) {
             />
           </div>
           <div className="text-sm text-muted-foreground">
-            Import v1/v2 CSV schedules (v1: Name/Date/Start/End/Tasks; v2: Housekeeper/Assignee/Date/Start/Duration/Tasks)
+            Import v1/v2 CSV schedules (v1: Name/Date/Start/End/Tasks; v2:
+            Housekeeper/Assignee/Date/Start/Duration/Tasks)
           </div>
         </div>
       </CardContent>
