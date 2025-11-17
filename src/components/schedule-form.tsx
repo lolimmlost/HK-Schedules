@@ -96,7 +96,8 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
 
   /**
    * Handles form submission by processing data and calling the parent onSubmit handler
-   * Converts any string durations to numbers and resets form after submission
+   * Converts any string durations to numbers
+   * Note: Form cleanup is handled by parent component unmounting this form
    */
   const onSubmitForm = (data: Schedule) => {
     // Convert duration string to number if needed
@@ -108,7 +109,8 @@ export function ScheduleForm({ initialData, onSubmit, onCancel }: ScheduleFormPr
       })),
     }
     onSubmit(processedData)
-    form.reset()
+    // Form reset removed to prevent Chrome localStorage race condition
+    // Parent component handles cleanup by setting showForm(false)
   }
 
   const addEntry = () => {
