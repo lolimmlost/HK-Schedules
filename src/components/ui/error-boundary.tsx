@@ -20,18 +20,25 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('🔍 ErrorBoundary - Component:', errorInfo.componentStack);
-    console.error('🔍 ErrorBoundary - Error:', error);
-    console.error('🔍 ErrorBoundary - Full Stack:', errorInfo.componentStack);
-    console.error('🔍 ErrorBoundary - Current schedules state:', JSON.stringify(window.localStorage.getItem('housekeeperSchedules'), null, 2));
-    console.error('🔍 ErrorBoundary - Operation context: Check browser network/localStorage for recent changes (import/delete)');
+    console.error('🔍 ErrorBoundary - Component:', errorInfo.componentStack)
+    console.error('🔍 ErrorBoundary - Error:', error)
+    console.error('🔍 ErrorBoundary - Full Stack:', errorInfo.componentStack)
+    console.error(
+      '🔍 ErrorBoundary - Current schedules state:',
+      JSON.stringify(window.localStorage.getItem('housekeeperSchedules'), null, 2)
+    )
+    console.error(
+      '🔍 ErrorBoundary - Operation context: Check browser network/localStorage for recent changes (import/delete)'
+    )
   }
 
   render() {
     if (this.state.hasError) {
       return (
         <div className="p-4 border rounded-md bg-destructive/10 border-destructive/30">
-          <h2 className="text-destructive font-semibold">Something went wrong rendering schedules</h2>
+          <h2 className="text-destructive font-semibold">
+            Something went wrong rendering schedules
+          </h2>
           <details className="mt-2 text-sm text-destructive-foreground">
             <summary>Click to see error details</summary>
             <pre className="mt-2 p-2 bg-destructive/5 rounded">{this.state.error?.message}</pre>

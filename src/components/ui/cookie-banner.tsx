@@ -1,6 +1,6 @@
-import * as React from "react"
-import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert" // Assuming alert.tsx exists; if not, use div with classes
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription } from '@/components/ui/alert' // Assuming alert.tsx exists; if not, use div with classes
 
 interface CookieConsent {
   analytics: boolean
@@ -18,7 +18,7 @@ export function CookieBanner() {
       // Disable analytics cookies if rejected (future integration)
       if (!parsed.analytics) {
         // Placeholder for disabling third-party trackers
-        console.log('Analytics disabled per user preference');
+        console.log('Analytics disabled per user preference')
       }
     } else {
       setIsVisible(true)
@@ -40,12 +40,14 @@ export function CookieBanner() {
     setConsent(newConsent)
     setIsVisible(false)
     // Disable analytics (future integration)
-    console.log('Analytics disabled per user preference');
+    console.log('Analytics disabled per user preference')
   }
 
   const handleSettings = () => {
     // For advanced: Could open a modal with granular options, but keep simple for now
-    alert('Essential cookies are always enabled. Analytics: Optional. For more details, see our Privacy Policy.')
+    alert(
+      'Essential cookies are always enabled. Analytics: Optional. For more details, see our Privacy Policy.'
+    )
   }
 
   if (!isVisible) return null
@@ -55,7 +57,19 @@ export function CookieBanner() {
       <Alert className="border-0 p-4 mx-4 mb-0 md:mx-0">
         <AlertDescription className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
           <div className="text-foreground">
-            <p>We use cookies to enhance your experience and analyze usage. Essential cookies are always enabled. For details, see our <a href="/docs/privacy-disclaimer.md" className="underline hover:no-underline" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</p>
+            <p>
+              We use cookies to enhance your experience and analyze usage. Essential cookies are
+              always enabled. For details, see our{' '}
+              <a
+                href="/docs/privacy-disclaimer.md"
+                className="underline hover:no-underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Privacy Policy
+              </a>
+              .
+            </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 min-w-fit">
             <Button
@@ -66,11 +80,7 @@ export function CookieBanner() {
             >
               Settings
             </Button>
-            <Button
-              size="sm"
-              onClick={handleAccept}
-              className="px-4 py-1"
-            >
+            <Button size="sm" onClick={handleAccept} className="px-4 py-1">
               Accept
             </Button>
             <Button

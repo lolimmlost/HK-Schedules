@@ -1,6 +1,6 @@
 //import React from 'react'
-import { Badge } from "@/components/ui/badge"
-import { Calendar } from "lucide-react"
+import { Badge } from '@/components/ui/badge'
+import { Calendar } from 'lucide-react'
 
 interface AppHeaderProps {
   scheduleCount: number

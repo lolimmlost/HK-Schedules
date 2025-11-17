@@ -1,6 +1,6 @@
 //import React from 'react'
-import { Button } from "@/components/ui/button"
-import { Plus, Download, Printer } from "lucide-react"
+import { Button } from '@/components/ui/button'
+import { Plus, Download, Printer } from 'lucide-react'
 //import type { Schedule } from './schedule-form'
 
 interface ActionBarProps {
@@ -10,12 +10,7 @@ interface ActionBarProps {
   scheduleCount: number
 }
 
-export function ActionBar({
-  onAddSchedule,
-  onPrint,
-  onExport,
-  scheduleCount
-}: ActionBarProps) {
+export function ActionBar({ onAddSchedule, onPrint, onExport, scheduleCount }: ActionBarProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
       <div className="flex-1">

@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from "react"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Filter, Calendar } from "lucide-react"
-import { Schedule } from "./schedule-form"
+import React, { useState, useEffect } from 'react'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Search, Filter, Calendar } from 'lucide-react'
+import { Schedule } from './schedule-form'
 
 interface DashboardControlsProps {
   schedules: Schedule[]
@@ -21,12 +27,12 @@ export function DashboardControls({
   dateFilter,
   onSearchChange,
   onCategoryChange,
-  onDateChange
+  onDateChange,
 }: DashboardControlsProps) {
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm)
-  const [_debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
+  const [_debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
 
-  const categories = ["all", ...new Set(schedules.map(s => s.category))] as const
+  const categories = ['all', ...new Set(schedules.map((s) => s.category))] as const
 
   // Debounce search
   useEffect(() => {
@@ -34,7 +40,7 @@ export function DashboardControls({
       onSearchChange(localSearchTerm)
       setDebouncedSearchTerm(localSearchTerm)
     }, 300)
-    
+
     return () => clearTimeout(timer)
   }, [localSearchTerm])
 
@@ -63,9 +69,13 @@ export function DashboardControls({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Categories</SelectItem>
-          {categories.filter(c => c !== "all").map(cat => (
-            <SelectItem key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</SelectItem>
-          ))}
+          {categories
+            .filter((c) => c !== 'all')
+            .map((cat) => (
+              <SelectItem key={cat} value={cat}>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
 

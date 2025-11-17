@@ -1,6 +1,11 @@
 import { renderHook, act } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
-import { useScheduleStore, validateScheduleEntries, isLegacyData, migrateV1ToV2 } from '../useScheduleStore'
+import {
+  useScheduleStore,
+  validateScheduleEntries,
+  isLegacyData,
+  migrateV1ToV2,
+} from '../useScheduleStore'
 import type { Schedule } from '../../components/schedule-form'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -9,9 +14,15 @@ const localStorageMock = (() => {
   let store: { [key: string]: string } = {}
   return {
     getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => { store[key] = value.toString() },
-    removeItem: (key: string) => { delete store[key] },
-    clear: () => { store = {} }
+    setItem: (key: string, value: string) => {
+      store[key] = value.toString()
+    },
+    removeItem: (key: string) => {
+      delete store[key]
+    },
+    clear: () => {
+      store = {}
+    },
   }
 })()
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
@@ -28,11 +39,28 @@ describe('useScheduleStore', () => {
       title: 'Test Housekeeping',
       category: 'housekeeping',
       entries: [
-        { id: '1', time: '09:00', duration: 60, task: 'Room 101', assignee: 'John', status: 'pending', recurrence: 'none' },
-        { id: '2', time: '10:00', duration: 60, task: 'Room 102', assignee: 'John', status: 'pending', recurrence: 'none' }
+        {
+          id: '1',
+          time: '09:00',
+          duration: 60,
+          task: 'Room 101',
+          assignee: 'John',
+          status: 'pending',
+          recurrence: 'none',
+        },
+        {
+          id: '2',
+          time: '10:00',
+          duration: 60,
+          task: 'Room 102',
+          assignee: 'John',
+          status: 'pending',
+          recurrence: 'none',
+        },
       ],
       version: '2.0',
-      recurrence: 'none'
+      recurrence: 'none',
+      scheduleType: 'date-specific',
     }
     expect(validateScheduleEntries(schedule)).toBe(true)
   })
@@ -43,11 +71,28 @@ describe('useScheduleStore', () => {
       title: 'Test Housekeeping',
       category: 'housekeeping',
       entries: [
-        { id: '1', time: '09:00', duration: 60, task: 'Room 101', assignee: 'John', status: 'pending', recurrence: 'none' },
-        { id: '2', time: '10:00', duration: 60, task: 'Room 101', assignee: 'John', status: 'pending', recurrence: 'none' }
+        {
+          id: '1',
+          time: '09:00',
+          duration: 60,
+          task: 'Room 101',
+          assignee: 'John',
+          status: 'pending',
+          recurrence: 'none',
+        },
+        {
+          id: '2',
+          time: '10:00',
+          duration: 60,
+          task: 'Room 101',
+          assignee: 'John',
+          status: 'pending',
+          recurrence: 'none',
+        },
       ],
       version: '2.0',
-      recurrence: 'none'
+      recurrence: 'none',
+      scheduleType: 'date-specific',
     }
     expect(validateScheduleEntries(schedule)).toBe(false)
   })
@@ -58,19 +103,36 @@ describe('useScheduleStore', () => {
       title: 'Test',
       category: 'general',
       entries: [
-        { id: '1', time: '09:00', duration: 60, task: 'Task 1', assignee: 'John', status: 'pending', recurrence: 'none' },
-        { id: '2', time: '09:00', duration: 60, task: 'Task 2', assignee: 'Jane', status: 'pending', recurrence: 'none' }
+        {
+          id: '1',
+          time: '09:00',
+          duration: 60,
+          task: 'Task 1',
+          assignee: 'John',
+          status: 'pending',
+          recurrence: 'none',
+        },
+        {
+          id: '2',
+          time: '09:00',
+          duration: 60,
+          task: 'Task 2',
+          assignee: 'Jane',
+          status: 'pending',
+          recurrence: 'none',
+        },
       ],
       version: '2.0',
-      recurrence: 'none'
+      recurrence: 'none',
+      scheduleType: 'date-specific',
     }
     expect(validateScheduleEntries(schedule)).toBe(false)
   })
 
   it('warns for large schedule >130 entries', () => {
     const largeEntries = Array.from({ length: 131 }, (_, i) => {
-      const hour = Math.floor(i / 10);
-      const minute = (i % 10) * 6;
+      const hour = Math.floor(i / 10)
+      const minute = (i % 10) * 6
       return {
         id: uuidv4(),
         time: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`,
@@ -78,7 +140,7 @@ describe('useScheduleStore', () => {
         task: `Task ${i}`,
         assignee: 'John',
         status: 'pending' as const,
-        recurrence: 'none' as const
+        recurrence: 'none' as const,
       }
     })
 
@@ -88,7 +150,8 @@ describe('useScheduleStore', () => {
       category: 'housekeeping',
       entries: largeEntries,
       version: '2.0',
-      recurrence: 'none'
+      recurrence: 'none',
+      scheduleType: 'date-specific',
     }
 
     const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
@@ -107,28 +170,36 @@ describe('useScheduleStore', () => {
       category: 'general',
       entries: [],
       version: '2.0',
-      recurrence: 'none'
+      recurrence: 'none',
+      scheduleType: 'date-specific',
     }
     expect(isLegacyData(modern)).toBe(false)
   })
 
   it('migrates v1 to v2 correctly', () => {
     const legacy = [
-      { id: 'old1', name: 'John', start: '09:00', end: '10:00', tasks: 'Clean rooms', date: '2025-01-01' }
+      {
+        id: 'old1',
+        name: 'John',
+        start: '09:00',
+        end: '10:00',
+        tasks: 'Clean rooms',
+        date: '2025-01-01',
+      },
     ]
     const migrated = migrateV1ToV2(legacy)
     expect(migrated).toHaveLength(1)
     const newSchedule = migrated[0]
     expect(newSchedule.title).toBe('John')
-    expect(newSchedule.entries).toHaveLength(1)
-    expect(newSchedule.entries[0].task).toBe('Clean rooms')
-    expect(newSchedule.entries[0].assignee).toBe('John')
+    expect(newSchedule.entries?.length).toBe(1)
+    expect(newSchedule.entries?.[0]?.task).toBe('Clean rooms')
+    expect(newSchedule.entries?.[0]?.assignee).toBe('John')
     expect(newSchedule.version).toBe('2.0')
   })
 
   it('housekeeper management adds/removes correctly', () => {
     const { result } = renderHook(() => useScheduleStore())
-    
+
     act(() => {
       result.current.addHousekeeper('John')
     })
@@ -152,17 +223,26 @@ describe('useScheduleStore', () => {
 
   it('updateSchedule validates before updating', () => {
     const { result } = renderHook(() => useScheduleStore())
-    
+
     // Add initial schedule
     const initialSchedule: Schedule = {
       id: 'test',
       title: 'Test',
       category: 'general',
       entries: [
-        { id: '1', time: '09:00', duration: 60, task: 'Task1', assignee: 'John', status: 'pending', recurrence: 'none' }
+        {
+          id: '1',
+          time: '09:00',
+          duration: 60,
+          task: 'Task1',
+          assignee: 'John',
+          status: 'pending',
+          recurrence: 'none',
+        },
       ],
       version: '2.0',
-      recurrence: 'none'
+      recurrence: 'none',
+      scheduleType: 'date-specific',
     }
     act(() => {
       result.current.addSchedule(initialSchedule)
@@ -171,22 +251,38 @@ describe('useScheduleStore', () => {
     // Valid update
     const validUpdate: Schedule = {
       ...initialSchedule,
-      entries: [
-        { ...initialSchedule.entries[0], task: 'Updated Task' }
-      ]
+      entries: initialSchedule.entries
+        ? [{ ...initialSchedule.entries[0], task: 'Updated Task' }]
+        : [],
     }
     act(() => {
       result.current.updateSchedule(validUpdate)
     })
-    expect(result.current.getSchedules()[0].entries[0].task).toBe('Updated Task')
+    expect(result.current.getSchedules()[0].entries?.[0]?.task).toBe('Updated Task')
 
     // Invalid update (duplicate time)
     const invalidUpdate: Schedule = {
       ...initialSchedule,
       entries: [
-        { id: '1', time: '09:00', duration: 60, task: 'Task1', assignee: 'John', status: 'pending', recurrence: 'none' },
-        { id: '2', time: '09:00', duration: 60, task: 'Task2', assignee: 'Jane', status: 'pending', recurrence: 'none' }
-      ]
+        {
+          id: '1',
+          time: '09:00',
+          duration: 60,
+          task: 'Task1',
+          assignee: 'John',
+          status: 'pending',
+          recurrence: 'none',
+        },
+        {
+          id: '2',
+          time: '09:00',
+          duration: 60,
+          task: 'Task2',
+          assignee: 'Jane',
+          status: 'pending',
+          recurrence: 'none',
+        },
+      ],
     }
     const prevSchedules = result.current.getSchedules()
     act(() => {

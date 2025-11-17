@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
   server: {
@@ -18,29 +18,25 @@ export default defineConfig({
         target: 'http://localhost:4000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/export-csv/, '/export-csv'),
-        configure: (proxy, options) => {
-          proxy.on('error', (err, req, res) => {
+        configure: (_proxy, _options) => {
+          _proxy.on('error', (err, _req, _res) => {
             console.log('Vite proxy error for /export-csv:', err)
           })
-          proxy.on('proxyReq', (proxyReq, req, res) => {
+          _proxy.on('proxyReq', (_proxyReq, req, _res) => {
             console.log('Vite proxying /export-csv request:', req.method, req.url)
             console.log('Request headers:', Object.fromEntries(Object.entries(req.headers)))
           })
-          proxy.on('proxyRes', (proxyRes, req, res) => {
+          _proxy.on('proxyRes', (proxyRes, req, _res) => {
             console.log('Vite proxy response for /export-csv:', proxyRes.statusCode, req.method)
             console.log('Response headers:', Object.fromEntries(Object.entries(proxyRes.headers)))
           })
-        }
-      }
+        },
+      },
     },
-    allowedHosts: [
-      'localhost',
-      'appahouse.com',
-      '.appahouse.com'
-    ]
+    allowedHosts: ['localhost', 'appahouse.com', '.appahouse.com'],
   },
   build: {
     outDir: 'dist',
-    assetsDir: 'assets'
-  }
+    assetsDir: 'assets',
+  },
 })

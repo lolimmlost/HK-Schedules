@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+dist
+build
+.git
+.gitignore
+.env
+.env.local
+.vscode
+.idea
+*.md
+*.log
+coverage
+.husky
+test-results
+playwright-report
