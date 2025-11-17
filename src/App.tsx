@@ -17,6 +17,8 @@ import { AppHeader } from "@/components/AppHeader"
 import { ActionBar } from "@/components/ActionBar"
 import { ImportSection } from "@/components/ImportSection"
 import { ErrorBoundary } from "@/components/ui/error-boundary"
+import { Toaster } from "@/components/ui/toaster"
+import { toastHelpers } from "@/hooks/use-toast"
 //import { User, Plus, Download, Upload, Printer, Calendar, Clock, List } from "lucide-react"
 import './index.css'
 
@@ -237,9 +239,17 @@ function App() {
 
       event.target.value = ''
       const message = isLegacyFormat
-        ? `${importedCount} legacy schedules imported successfully${skippedCount > 0 ? `. ${skippedCount} rows skipped (invalid data).` : '.'}`
-        : `${importedCount} schedules imported successfully${skippedCount > 0 ? `. ${skippedCount} rows skipped.` : '.'}`
-      alert(message)
+        ? `${importedCount} legacy schedule${importedCount !== 1 ? 's' : ''} imported`
+        : `${importedCount} schedule${importedCount !== 1 ? 's' : ''} imported`
+      const description = skippedCount > 0 ? `${skippedCount} row${skippedCount !== 1 ? 's' : ''} skipped (invalid data)` : undefined
+
+      if (importedCount > 0) {
+        toastHelpers.success(message, description)
+      } else if (skippedCount > 0) {
+        toastHelpers.warning('Import completed with errors', `${skippedCount} row${skippedCount !== 1 ? 's' : ''} skipped`)
+      } else {
+        toastHelpers.info('No data imported', 'The file appears to be empty or invalid')
+      }
       console.log(`🔍 App - Import complete: ${importedCount} imported, ${skippedCount} skipped`)
     }
     reader.readAsText(file)
@@ -573,6 +583,7 @@ function App() {
         />
       </div>
       <CookieBanner />
+      <Toaster />
     </div>
   )
 }
