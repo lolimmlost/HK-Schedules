@@ -218,9 +218,6 @@ export function PrintSchedule({
                         Date
                       </th>
                     )}
-                    <th className="border border-gray-300 print:border-black p-2 text-left font-semibold print:text-xs print:p-1.5 print:w-1/4">
-                      Assignee
-                    </th>
                     <th className="border border-gray-300 print:border-black p-2 text-center font-semibold print:text-xs print:p-1.5 print:w-1/6">
                       Time
                     </th>
@@ -230,7 +227,7 @@ export function PrintSchedule({
                     <th className="border border-gray-300 print:border-black p-2 text-center font-semibold print:text-xs print:p-1.5 print:w-1/8">
                       Status
                     </th>
-                    <th className="border border-gray-300 print:border-black p-2 text-left font-semibold print:text-xs print:p-1.5 print:w-1/4">
+                    <th className="border border-gray-300 print:border-black p-2 text-left font-semibold print:text-xs print:p-1.5 print:w-2/5">
                       Task
                     </th>
                   </tr>
@@ -251,11 +248,6 @@ export function PrintSchedule({
                               ? 'Date-Specific'
                               : 'TBD'}
                         </div>
-                      </td>
-
-                      {/* Assignee */}
-                      <td className="border border-gray-300 print:border-black p-2 print:p-1.5 print:text-xs">
-                        <span className="break-words">{entry.assignee}</span>
                       </td>
 
                       {/* Time */}
@@ -282,8 +274,10 @@ export function PrintSchedule({
                       </td>
 
                       {/* Task */}
-                      <td className="border border-gray-300 print:border-black p-2 print:p-1.5 print:text-xs">
-                        <span className="break-words">{entry.task}</span>
+                      <td className="border border-gray-300 print:border-black p-2 print:p-1.5 print:text-sm">
+                        <span className="break-words font-semibold text-base print:text-sm print:font-semibold">
+                          {entry.task}
+                        </span>
                       </td>
                     </tr>
                   ))}
