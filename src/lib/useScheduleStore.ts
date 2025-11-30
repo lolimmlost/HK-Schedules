@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { getDuration } from './utils'
 import type { Schedule, Entry } from '@/components/schedule-form'
 import { scheduleSchema } from '../components/schedule-form'
+import { toastHelpers } from '@/hooks/use-toast'
 
 export interface ScheduleState {
   schedules: Schedule[]
@@ -113,25 +114,34 @@ export const useScheduleStore = create<ScheduleState>()(
         if (!result.success) {
           console.error('Zod validation failed for addSchedule:', result.error.issues)
           console.error('Full error details:', result.error.format())
-          throw new Error(
-            `Invalid schedule data: ${result.error.issues.map((e: { message: string }) => e.message).join(', ')}`
-          )
+          const errorMessage = result.error.issues
+            .map((e: { message: string }) => e.message)
+            .join(', ')
+          toastHelpers.error('Failed to create schedule', errorMessage)
+          throw new Error(`Invalid schedule data: ${errorMessage}`)
         }
         if (!validateScheduleEntries(schedule)) {
           console.error('Enhanced validation failed: Invalid schedule add')
+          toastHelpers.error('Invalid schedule data', 'Please check your entries for errors')
           throw new Error('Invalid schedule data')
         }
         set((state: ScheduleState) => ({ schedules: [...state.schedules, schedule] }))
+        toastHelpers.success(
+          'Schedule created',
+          `"${schedule.title}" has been created successfully`
+        )
       },
       updateSchedule: (updatedSchedule: Schedule) => {
         console.log('🔍 Store - updateSchedule called with:', updatedSchedule)
         const result = scheduleSchema.safeParse(updatedSchedule)
         if (!result.success) {
           console.error('Zod validation failed for updateSchedule:', result.error.issues)
+          toastHelpers.error('Failed to update schedule', 'Validation error')
           return // Don't update on parse failure
         }
         if (!validateScheduleEntries(updatedSchedule)) {
           console.error('Enhanced validation failed: Invalid schedule update')
+          toastHelpers.error('Invalid schedule data', 'Please check your entries for errors')
           return
         }
         set((state: ScheduleState) => ({
@@ -139,6 +149,10 @@ export const useScheduleStore = create<ScheduleState>()(
             s.id === updatedSchedule.id ? updatedSchedule : s
           ),
         }))
+        toastHelpers.success(
+          'Schedule updated',
+          `"${updatedSchedule.title}" has been updated successfully`
+        )
       },
       deleteSchedule: (id: string) => {
         const state = get()
@@ -148,6 +162,10 @@ export const useScheduleStore = create<ScheduleState>()(
             schedules: state.schedules.filter((s: Schedule) => s.id !== id),
             deletedSchedules: [...state.deletedSchedules, deleted],
           }))
+          toastHelpers.warning(
+            'Schedule deleted',
+            `"${deleted.title}" has been deleted. You have 10 seconds to undo.`
+          )
           // Clear deleted after 10 seconds
           setTimeout(() => {
             set((state: ScheduleState) => ({
@@ -156,14 +174,20 @@ export const useScheduleStore = create<ScheduleState>()(
           }, 10000)
         }
       },
-      undoDelete: (id: string) =>
+      undoDelete: (id: string) => {
+        const state = get()
+        const restored = state.deletedSchedules.find((s) => s.id === id)
         set((state: ScheduleState) => ({
           schedules: [
             ...state.schedules,
             ...state.deletedSchedules.filter((s: Schedule) => s.id === id),
           ],
           deletedSchedules: state.deletedSchedules.filter((s: Schedule) => s.id !== id),
-        })),
+        }))
+        if (restored) {
+          toastHelpers.success('Schedule restored', `"${restored.title}" has been restored`)
+        }
+      },
       clearDeleted: () => set({ deletedSchedules: [] }),
       getSchedule: (id: string) => {
         const state = get() as ScheduleState

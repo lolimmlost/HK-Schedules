@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import type { Schedule } from '@/components/schedule-form'
+import { toastHelpers } from '@/hooks/use-toast'
 
 /**
  * Result object returned by the CSV export function
@@ -70,6 +71,7 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
           typeof schedules,
           schedules
         )
+        toastHelpers.error('Export failed', 'Invalid schedule data provided')
         return {
           filename: '',
           rowCount: 0,
@@ -445,6 +447,7 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
 
       if (validRows === 0) {
         console.warn('🔍 useCSVExport - No valid schedule data to export')
+        toastHelpers.warning('No data to export', 'Please add some schedules first')
         return {
           filename: '',
           rowCount: 0,
@@ -524,6 +527,11 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
         )
       }, 1000)
 
+      toastHelpers.success(
+        'Export successful',
+        `Exported ${validRows} schedule${validRows !== 1 ? 's' : ''} to ${filename}`
+      )
+
       return {
         filename,
         rowCount: validRows,
@@ -531,6 +539,8 @@ export function useCSVExport(): (schedules: Schedule[]) => CSVExportResult {
       } as CSVExportResult & { warning?: string }
     } catch (error) {
       console.error('🔍 useCSVExport - Export error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate CSV file'
+      toastHelpers.error('Export failed', errorMessage)
 
       return {
         filename: '',
