@@ -1,0 +1,237 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+    - banner [ref=e2]:
+        - generic [ref=e3]:
+            - link "MC MC Server List" [ref=e4] [cursor=pointer]:
+                - /url: /
+                - generic [ref=e6] [cursor=pointer]: MC
+                - generic [ref=e7] [cursor=pointer]: MC Server List
+            - navigation [ref=e8]:
+                - link "Home" [ref=e9] [cursor=pointer]:
+                    - /url: /
+                - link "Browse Servers" [ref=e10] [cursor=pointer]:
+                    - /url: /servers
+                - link "Collections" [ref=e11] [cursor=pointer]:
+                    - /url: /collections
+                - link "What's New" [ref=e12] [cursor=pointer]:
+                    - /url: /changelog
+        - generic [ref=e13]:
+            - link "Dashboard" [ref=e14] [cursor=pointer]:
+                - /url: /dashboard
+                - button "Dashboard" [ref=e15] [cursor=pointer]:
+                    - img
+                    - generic [ref=e16] [cursor=pointer]: Dashboard
+            - link "My Collections" [ref=e17] [cursor=pointer]:
+                - /url: /dashboard/collections
+                - button "My Collections" [ref=e18] [cursor=pointer]:
+                    - img
+                    - generic [ref=e19] [cursor=pointer]: My Collections
+            - link "Add Server" [ref=e20] [cursor=pointer]:
+                - /url: /dashboard/servers/new
+                - button "Add Server" [ref=e21] [cursor=pointer]:
+                    - img
+                    - generic [ref=e22] [cursor=pointer]: Add Server
+            - button "Toggle theme" [ref=e23] [cursor=pointer]:
+                - img
+                - generic [ref=e24] [cursor=pointer]: Toggle theme
+            - button "Account" [ref=e25] [cursor=pointer]:
+                - generic [ref=e27] [cursor=pointer]:
+                    - img
+    - main [ref=e28]:
+        - generic [ref=e34]:
+            - heading "Discover the Best Minecraft Servers" [level=1] [ref=e35]
+            - paragraph [ref=e36]: Find vanilla, modded, and crossplay servers. Vote for your favorites and help others discover great communities.
+            - generic [ref=e37]:
+                - generic [ref=e38]:
+                    - img [ref=e39]
+                    - textbox "Search servers by name, IP, or tags..." [ref=e42]
+                - generic [ref=e43]:
+                    - button "Search" [ref=e44] [cursor=pointer]
+                    - button "I'm Feeling Lucky" [ref=e45] [cursor=pointer]
+            - generic [ref=e46]:
+                - link "Vanilla" [ref=e47] [cursor=pointer]:
+                    - /url: /servers?serverType=vanilla
+                    - button "Vanilla" [ref=e48] [cursor=pointer]
+                - link "Modded" [ref=e49] [cursor=pointer]:
+                    - /url: /servers?serverType=modded
+                    - button "Modded" [ref=e50] [cursor=pointer]
+                - link "Crossplay" [ref=e51] [cursor=pointer]:
+                    - /url: /servers?serverType=crossplay
+                    - button "Crossplay" [ref=e52] [cursor=pointer]
+                - link "Online Only" [ref=e53] [cursor=pointer]:
+                    - /url: /servers?onlineOnly=true
+                    - button "Online Only" [ref=e54] [cursor=pointer]
+        - generic [ref=e55]:
+            - generic [ref=e56]:
+                - generic [ref=e57]:
+                    - img [ref=e59]
+                    - heading "Top Servers" [level=2] [ref=e62]
+                - link "View All" [ref=e63] [cursor=pointer]:
+                    - /url: /servers?sortBy=votes
+                    - button "View All" [ref=e64] [cursor=pointer]
+            - generic [ref=e65]:
+                - generic [ref=e66]:
+                    - generic [ref=e67]:
+                        - generic [ref=e69]:
+                            - img [ref=e70]
+                            - text: Online
+                        - link "Vanilla Minecraft + (Crossplay, Backwards and Forward compatible with any minecraft version)" [ref=e72] [cursor=pointer]:
+                            - /url: /servers/4e68fad6-c371-49b6-a837-92d7c2c7d55c
+                            - heading "Vanilla Minecraft + (Crossplay, Backwards and Forward compatible with any minecraft version)" [level=3] [ref=e73] [cursor=pointer]
+                        - generic [ref=e74]:
+                            - code [ref=e75]: Hlmc.appahouse.com:25566
+                            - button "Copy IP address" [ref=e76] [cursor=pointer]:
+                                - img
+                        - paragraph [ref=e77]: 'Pure Minecraft, perfected. Enjoy the classic experience you love with carefully curated quality-of-life enhancements that respect the vanilla spirit. No game-breaking mods—just thoughtful improvements that let you focus on what matters: building, exploring, and creating with friends. The Minecraft you know, refined to its best self.'
+                        - generic [ref=e79]: vanilla
+                        - generic [ref=e80]:
+                            - generic [ref=e81]:
+                                - img [ref=e82]
+                                - generic [ref=e87]: 1/20
+                            - generic [ref=e88]:
+                                - generic [ref=e89]: Uptime
+                                - generic [ref=e90]: 100.0%
+                            - generic [ref=e91]:
+                                - generic [ref=e92]: v
+                                - generic [ref=e93]: 1.21.8
+                        - generic [ref=e94]:
+                            - generic [ref=e95]:
+                                - link "View Details" [ref=e96] [cursor=pointer]:
+                                    - /url: /servers/4e68fad6-c371-49b6-a837-92d7c2c7d55c
+                                - button "Add to comparison" [ref=e97] [cursor=pointer]:
+                                    - img
+                                - button "Add to collection" [ref=e98] [cursor=pointer]:
+                                    - img
+                            - generic [ref=e99]:
+                                - img [ref=e100]
+                                - generic [ref=e103]: '6'
+                    - generic [ref=e106]: V
+                - generic [ref=e108]:
+                    - generic [ref=e109]:
+                        - generic [ref=e111]:
+                            - img [ref=e112]
+                            - text: Online
+                        - link "TerraFirmaCraft Homelab Server" [ref=e114] [cursor=pointer]:
+                            - /url: /servers/3f3c681b-08bc-4322-99f3-f3ddfad96488
+                            - heading "TerraFirmaCraft Homelab Server" [level=3] [ref=e115] [cursor=pointer]
+                        - generic [ref=e116]:
+                            - code [ref=e117]: mc.appahouse.com:25565
+                            - button "Copy IP address" [ref=e118] [cursor=pointer]:
+                                - img
+                        - paragraph [ref=e119]: Welcome to a world where survival truly matters. Experience Minecraft reimagined with realistic geology, seasons, and craftsmanship. From primitive tools to advanced metallurgy, every milestone is earned. Master agriculture through the changing seasons, explore diverse rock layers for rare ores, and build a legacy that stands the test of time. This is survival reforged—challenging, rewarding, and deeply immersive.
+                        - generic [ref=e121]: modded
+                        - generic [ref=e122]:
+                            - generic [ref=e123]:
+                                - img [ref=e124]
+                                - generic [ref=e129]: 0/20
+                            - generic [ref=e130]:
+                                - generic [ref=e131]: Uptime
+                                - generic [ref=e132]: 100.0%
+                            - generic [ref=e133]:
+                                - generic [ref=e134]: v
+                                - generic [ref=e135]: '1.710'
+                        - generic [ref=e136]:
+                            - generic [ref=e137]:
+                                - link "View Details" [ref=e138] [cursor=pointer]:
+                                    - /url: /servers/3f3c681b-08bc-4322-99f3-f3ddfad96488
+                                - button "Add to comparison" [ref=e139] [cursor=pointer]:
+                                    - img
+                                - button "Add to collection" [ref=e140] [cursor=pointer]:
+                                    - img
+                            - generic [ref=e141]:
+                                - img [ref=e142]
+                                - generic [ref=e145]: '5'
+                    - generic [ref=e148]: T
+        - generic [ref=e150]:
+            - generic [ref=e151]:
+                - generic [ref=e152]:
+                    - img [ref=e154]
+                    - heading "Recently Added" [level=2] [ref=e157]
+                - link "View All" [ref=e158] [cursor=pointer]:
+                    - /url: /servers?sortBy=newest
+                    - button "View All" [ref=e159] [cursor=pointer]
+            - generic [ref=e160]:
+                - generic [ref=e161]:
+                    - generic [ref=e162]:
+                        - generic [ref=e164]:
+                            - img [ref=e165]
+                            - text: Online
+                        - link "Vanilla Minecraft + (Crossplay, Backwards and Forward compatible with any minecraft version)" [ref=e167] [cursor=pointer]:
+                            - /url: /servers/4e68fad6-c371-49b6-a837-92d7c2c7d55c
+                            - heading "Vanilla Minecraft + (Crossplay, Backwards and Forward compatible with any minecraft version)" [level=3] [ref=e168] [cursor=pointer]
+                        - generic [ref=e169]:
+                            - code [ref=e170]: Hlmc.appahouse.com:25566
+                            - button "Copy IP address" [ref=e171] [cursor=pointer]:
+                                - img
+                        - paragraph [ref=e172]: 'Pure Minecraft, perfected. Enjoy the classic experience you love with carefully curated quality-of-life enhancements that respect the vanilla spirit. No game-breaking mods—just thoughtful improvements that let you focus on what matters: building, exploring, and creating with friends. The Minecraft you know, refined to its best self.'
+                        - generic [ref=e174]: vanilla
+                        - generic [ref=e175]:
+                            - generic [ref=e176]:
+                                - img [ref=e177]
+                                - generic [ref=e182]: 1/20
+                            - generic [ref=e183]:
+                                - generic [ref=e184]: Uptime
+                                - generic [ref=e185]: 100.0%
+                            - generic [ref=e186]:
+                                - generic [ref=e187]: v
+                                - generic [ref=e188]: 1.21.8
+                        - generic [ref=e189]:
+                            - generic [ref=e190]:
+                                - link "View Details" [ref=e191] [cursor=pointer]:
+                                    - /url: /servers/4e68fad6-c371-49b6-a837-92d7c2c7d55c
+                                - button "Add to comparison" [ref=e192] [cursor=pointer]:
+                                    - img
+                                - button "Add to collection" [ref=e193] [cursor=pointer]:
+                                    - img
+                            - generic [ref=e194]:
+                                - img [ref=e195]
+                                - generic [ref=e198]: '6'
+                    - generic [ref=e201]: V
+                - generic [ref=e203]:
+                    - generic [ref=e204]:
+                        - generic [ref=e206]:
+                            - img [ref=e207]
+                            - text: Online
+                        - link "TerraFirmaCraft Homelab Server" [ref=e209] [cursor=pointer]:
+                            - /url: /servers/3f3c681b-08bc-4322-99f3-f3ddfad96488
+                            - heading "TerraFirmaCraft Homelab Server" [level=3] [ref=e210] [cursor=pointer]
+                        - generic [ref=e211]:
+                            - code [ref=e212]: mc.appahouse.com:25565
+                            - button "Copy IP address" [ref=e213] [cursor=pointer]:
+                                - img
+                        - paragraph [ref=e214]: Welcome to a world where survival truly matters. Experience Minecraft reimagined with realistic geology, seasons, and craftsmanship. From primitive tools to advanced metallurgy, every milestone is earned. Master agriculture through the changing seasons, explore diverse rock layers for rare ores, and build a legacy that stands the test of time. This is survival reforged—challenging, rewarding, and deeply immersive.
+                        - generic [ref=e216]: modded
+                        - generic [ref=e217]:
+                            - generic [ref=e218]:
+                                - img [ref=e219]
+                                - generic [ref=e224]: 0/20
+                            - generic [ref=e225]:
+                                - generic [ref=e226]: Uptime
+                                - generic [ref=e227]: 100.0%
+                            - generic [ref=e228]:
+                                - generic [ref=e229]: v
+                                - generic [ref=e230]: '1.710'
+                        - generic [ref=e231]:
+                            - generic [ref=e232]:
+                                - link "View Details" [ref=e233] [cursor=pointer]:
+                                    - /url: /servers/3f3c681b-08bc-4322-99f3-f3ddfad96488
+                                - button "Add to comparison" [ref=e234] [cursor=pointer]:
+                                    - img
+                                - button "Add to collection" [ref=e235] [cursor=pointer]:
+                                    - img
+                            - generic [ref=e236]:
+                                - img [ref=e237]
+                                - generic [ref=e240]: '5'
+                    - generic [ref=e243]: T
+        - generic [ref=e248]:
+            - heading "Ready to share your server?" [level=2] [ref=e249]
+            - paragraph [ref=e250]: List your Minecraft server and reach thousands of players looking for their next adventure.
+            - link "Add Your Server" [ref=e251] [cursor=pointer]:
+                - /url: /dashboard/servers/new
+                - button "Add Your Server" [ref=e252] [cursor=pointer]
+    - region "Notifications alt+T"
+    - button "Open TanStack Devtools" [ref=e253] [cursor=pointer]:
+        - img "TanStack Devtools" [ref=e254] [cursor=pointer]
+```

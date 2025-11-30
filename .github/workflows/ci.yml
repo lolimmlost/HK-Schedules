@@ -59,16 +59,12 @@ jobs:
 
         run: npm run build
 
-      - name: Start dev server
+      - name: Start dev server and run E2E tests
 
         run: |
-
-
           npm run dev &
-
-      - name: Run E2E tests
-
-        run: npm run test:e2e
+          npx wait-on http://localhost:3001 --timeout 60000
+          npm run test:e2e
 
       - name: Upload Playwright report
 
