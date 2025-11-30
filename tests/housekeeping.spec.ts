@@ -26,7 +26,7 @@ test.describe('Housekeeping Workflow E2E', () => {
 
     // Wait for form to be valid with default entry
     await page.waitForTimeout(1000)
-  
+
     // Fill initial entry only (single entry test)
     await page.fill('input[placeholder*="Clean Room"]', 'Clean Room 101')
     await page.fill('input[placeholder*="John Doe"]', 'John Doe')
@@ -60,7 +60,7 @@ test.describe('Housekeeping Workflow E2E', () => {
 
     // Wait for form to be valid
     await page.waitForTimeout(1000)
-  
+
     // Fill initial entry only (single entry for large test too, until multi-entry bug fixed)
     await page.fill('input[placeholder*="Clean Room"]', 'Large Clean Room')
     await page.fill('input[placeholder*="John Doe"]', 'John Doe')

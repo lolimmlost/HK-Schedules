@@ -1,24 +1,24 @@
-import * as React from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { CookieBanner } from "@/components/ui/cookie-banner"
-import { ScheduleForm } from "@/components/schedule-form"
-import { ScheduleTable } from "@/components/schedule-table"
-import { PrintSchedule } from "@/components/print-schedule"
-import { Dashboard } from "@/components/Dashboard"
-import { Schedule } from "@/components/schedule-form"
-import { ChevronLeft } from "lucide-react"
-import { v4 as uuidv4 } from "uuid"
-import { getDuration } from "@/lib/utils"
-import { useScheduleStore } from "@/lib/useScheduleStore"
-import type { ScheduleState } from "@/lib/useScheduleStore"
-import { useCSVExport } from "@/lib/useCSVExport"
-import { AppHeader } from "@/components/AppHeader"
-import { ActionBar } from "@/components/ActionBar"
-import { ImportSection } from "@/components/ImportSection"
-import { ErrorBoundary } from "@/components/ui/error-boundary"
-import { Toaster } from "@/components/ui/toaster"
-import { toastHelpers } from "@/hooks/use-toast"
+import * as React from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { CookieBanner } from '@/components/ui/cookie-banner'
+import { ScheduleFormWrapper } from '@/components/schedule-form-wrapper'
+import { ScheduleTable } from '@/components/schedule-table'
+import { PrintSchedule } from '@/components/print-schedule'
+import { Dashboard } from '@/components/Dashboard'
+import { Schedule } from '@/components/schedule-form'
+import { ChevronLeft } from 'lucide-react'
+import { v4 as uuidv4 } from 'uuid'
+import { getDuration } from '@/lib/utils'
+import { useScheduleStore } from '@/lib/useScheduleStore'
+import type { ScheduleState } from '@/lib/useScheduleStore'
+import { useCSVExport } from '@/lib/useCSVExport'
+import { AppHeader } from '@/components/AppHeader'
+import { ActionBar } from '@/components/ActionBar'
+import { ImportSection } from '@/components/ImportSection'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { Toaster } from '@/components/ui/toaster'
+import { toastHelpers } from '@/hooks/use-toast'
 //import { User, Plus, Download, Upload, Printer, Calendar, Clock, List } from "lucide-react"
 import './index.css'
 
@@ -36,11 +36,13 @@ function App() {
   const [editingSchedule, setEditingSchedule] = React.useState<Schedule | null>(null)
   const [showForm, setShowForm] = React.useState(false)
   const [selectedSchedule, setSelectedSchedule] = React.useState<Schedule | null>(null)
-  const [viewMode, setViewMode] = React.useState<'dashboard' | 'view'>( 'dashboard')
+  const [viewMode, setViewMode] = React.useState<'dashboard' | 'view'>('dashboard')
 
   // Make selectedSchedule reactive to store changes
   const freshSelectedSchedule = useScheduleStore((state) =>
-    selectedSchedule?.id ? state.schedules.find((s: Schedule) => s.id === selectedSchedule.id) : null
+    selectedSchedule?.id
+      ? state.schedules.find((s: Schedule) => s.id === selectedSchedule.id)
+      : null
   )
 
   // CSV export hook
@@ -62,9 +64,9 @@ function App() {
       // Detect format and skip header row if present
       let startIndex = 0
       if (lines.length > 0) {
-        const firstLineParts = lines[0].split(',').map(part => part.trim().replace(/"/g, ''))
-        const hasEndColumn = firstLineParts.some(p => p.toLowerCase().includes('end'))
-        const hasDurationColumn = firstLineParts.some(p => p.toLowerCase().includes('duration'))
+        const firstLineParts = lines[0].split(',').map((part) => part.trim().replace(/"/g, ''))
+        const hasEndColumn = firstLineParts.some((p) => p.toLowerCase().includes('end'))
+        const hasDurationColumn = firstLineParts.some((p) => p.toLowerCase().includes('duration'))
         const colCount = firstLineParts.length
 
         // Legacy v1: Has "End" but no "Duration", typically 4-6 columns
@@ -74,11 +76,17 @@ function App() {
           startIndex = 1 // Skip header
         }
         // v2: Has "Duration", >=6 columns, case-insensitive header matching
-        else if (colCount >= 6 &&
-            firstLineParts.some(p => p.toLowerCase().includes('housekeeper') || p.toLowerCase().includes('name')) &&
-            firstLineParts.some(p => p.toLowerCase().includes('date')) &&
-            firstLineParts.some(p => p.toLowerCase().includes('start') || p.toLowerCase().includes('time')) &&
-            hasDurationColumn) {
+        else if (
+          colCount >= 6 &&
+          firstLineParts.some(
+            (p) => p.toLowerCase().includes('housekeeper') || p.toLowerCase().includes('name')
+          ) &&
+          firstLineParts.some((p) => p.toLowerCase().includes('date')) &&
+          firstLineParts.some(
+            (p) => p.toLowerCase().includes('start') || p.toLowerCase().includes('time')
+          ) &&
+          hasDurationColumn
+        ) {
           startIndex = 1
           console.log('🔍 App - Detected v2 CSV format')
         } else {
@@ -90,7 +98,7 @@ function App() {
         const line = lines[i].trim()
         if (!line) continue
 
-        const parts = line.split(',').map(part => part.trim().replace(/"/g, ''))
+        const parts = line.split(',').map((part) => part.trim().replace(/"/g, ''))
         if (parts.length < 4) {
           console.warn(`🔍 App - Skipping row ${i}: too few columns (${parts.length})`)
           skippedCount++
@@ -107,14 +115,21 @@ function App() {
           startTime = parts[2]
           endTime = parts[3]
           tasks = parts.slice(4).join(', ')
-          
+
           // Skip header-like rows but be less strict for older data
           if (!housekeeper || !startTime || !endTime) {
-            console.warn(`🔍 App - Skipping legacy row ${i}: missing required fields`, {housekeeper, startTime, endTime})
+            console.warn(`🔍 App - Skipping legacy row ${i}: missing required fields`, {
+              housekeeper,
+              startTime,
+              endTime,
+            })
             skippedCount++
             continue
           }
-          if (housekeeper.toLowerCase().includes('housekeeper') || housekeeper.toLowerCase().includes('name')) {
+          if (
+            housekeeper.toLowerCase().includes('housekeeper') ||
+            housekeeper.toLowerCase().includes('name')
+          ) {
             console.log(`🔍 App - Skipping legacy row ${i}: likely header`, housekeeper)
             skippedCount++
             continue
@@ -124,7 +139,9 @@ function App() {
             // Calculate duration from start/end using existing utility
             const durationText = getDuration(startTime, endTime)
             const durationMinutes = parseInt(durationText.replace(/[^0-9]/g, '')) || 60 // Fallback 60m
-            console.log(`🔍 App - Legacy duration calc: ${startTime}-${endTime} → ${durationMinutes}m`)
+            console.log(
+              `🔍 App - Legacy duration calc: ${startTime}-${endTime} → ${durationMinutes}m`
+            )
 
             // Convert to v2 structure
             const newSchedule: Schedule = {
@@ -133,21 +150,29 @@ function App() {
               category: 'housekeeping' as const,
               description: tasks || 'Imported legacy schedule',
               date: date.trim(),
-              entries: [{
-                id: uuidv4(),
-                time: startTime,
-                duration: durationMinutes,
-                task: tasks || 'General housekeeping',
-                assignee,
-                status: 'pending' as const,
-                recurrence: 'none' as const
-              }],
+              entries: [
+                {
+                  id: uuidv4(),
+                  time: startTime,
+                  duration: durationMinutes,
+                  task: tasks || 'General housekeeping',
+                  assignee,
+                  status: 'pending' as const,
+                  recurrence: 'none' as const,
+                },
+              ],
               version: '2.0',
-              recurrence: 'none' as const
+              recurrence: 'none' as const,
+              scheduleType: 'date-specific' as const,
             }
-            
+
             addSchedule(newSchedule)
-            console.log('🔍 App - imported legacy schedule:', newSchedule.title, 'Duration:', durationMinutes + 'm')
+            console.log(
+              '🔍 App - imported legacy schedule:',
+              newSchedule.title,
+              'Duration:',
+              durationMinutes + 'm'
+            )
           } catch (error) {
             console.warn('🔍 App - failed to import legacy schedule:', housekeeper, error)
             skippedCount++
@@ -166,7 +191,10 @@ function App() {
           tasks = parts.slice(5).join(', ')
 
           // Skip obvious header rows for v2
-          if (housekeeper?.toLowerCase().includes('housekeeper') || housekeeper?.toLowerCase().includes('name')) {
+          if (
+            housekeeper?.toLowerCase().includes('housekeeper') ||
+            housekeeper?.toLowerCase().includes('name')
+          ) {
             console.log(`🔍 App - Skipping v2 row ${i}: likely header`, housekeeper)
             skippedCount++
             continue
@@ -191,7 +219,10 @@ function App() {
                 } else if (!isNaN(parseFloat(durationStr))) {
                   // If numeric, assume hours (common in older CSVs)
                   durationHours = parseFloat(durationStr)
-                } else if (durationStr.toLowerCase().includes('min') || durationStr.toLowerCase().includes('m')) {
+                } else if (
+                  durationStr.toLowerCase().includes('min') ||
+                  durationStr.toLowerCase().includes('m')
+                ) {
                   // Parse minutes
                   const minMatch = durationStr.match(/(\d+(?:\.\d+)?)(min|m)/i)
                   if (minMatch) {
@@ -210,28 +241,40 @@ function App() {
                 category: 'housekeeping' as const,
                 description: tasks || 'Imported schedule',
                 date: date.trim(),
-                entries: [{
-                  id: uuidv4(),
-                  time: startTime,
-                  duration: durationMinutes,
-                  task: tasks || 'General housekeeping',
-                  assignee: assignee || housekeeper,
-                  status: 'pending' as const,
-                  recurrence: 'none' as const
-                }],
+                entries: [
+                  {
+                    id: uuidv4(),
+                    time: startTime,
+                    duration: durationMinutes,
+                    task: tasks || 'General housekeeping',
+                    assignee: assignee || housekeeper,
+                    status: 'pending' as const,
+                    recurrence: 'none' as const,
+                  },
+                ],
                 version: '2.0',
-                recurrence: 'none' as const
+                recurrence: 'none' as const,
+                scheduleType: 'date-specific' as const,
               }
-              
+
               addSchedule(newSchedule)
               importedCount++
-              console.log('🔍 App - imported v2 schedule:', newSchedule.title, 'Duration:', durationMinutes + 'm')
+              console.log(
+                '🔍 App - imported v2 schedule:',
+                newSchedule.title,
+                'Duration:',
+                durationMinutes + 'm'
+              )
             } catch (error) {
               console.warn('🔍 App - failed to import v2 schedule:', housekeeper, error)
               skippedCount++
             }
           } else {
-            console.warn(`🔍 App - Skipping v2 row ${i}: missing required fields`, {housekeeper, startTime, date})
+            console.warn(`🔍 App - Skipping v2 row ${i}: missing required fields`, {
+              housekeeper,
+              startTime,
+              date,
+            })
             skippedCount++
           }
         }
@@ -241,12 +284,18 @@ function App() {
       const message = isLegacyFormat
         ? `${importedCount} legacy schedule${importedCount !== 1 ? 's' : ''} imported`
         : `${importedCount} schedule${importedCount !== 1 ? 's' : ''} imported`
-      const description = skippedCount > 0 ? `${skippedCount} row${skippedCount !== 1 ? 's' : ''} skipped (invalid data)` : undefined
+      const description =
+        skippedCount > 0
+          ? `${skippedCount} row${skippedCount !== 1 ? 's' : ''} skipped (invalid data)`
+          : undefined
 
       if (importedCount > 0) {
         toastHelpers.success(message, description)
       } else if (skippedCount > 0) {
-        toastHelpers.warning('Import completed with errors', `${skippedCount} row${skippedCount !== 1 ? 's' : ''} skipped`)
+        toastHelpers.warning(
+          'Import completed with errors',
+          `${skippedCount} row${skippedCount !== 1 ? 's' : ''} skipped`
+        )
       } else {
         toastHelpers.info('No data imported', 'The file appears to be empty or invalid')
       }
@@ -319,14 +368,14 @@ function App() {
     console.log('🔍 App - schedules isArray:', Array.isArray(schedules))
     console.log('🔍 App - schedules length:', schedules?.length)
     console.log('🔍 App - localStorage raw:', localStorage.getItem('housekeeperSchedules'))
-    
+
     try {
       /**
        * Ensure schedules is always a valid Schedule[] array for export
        * Handles multiple data formats from localStorage and state management
        */
       let safeSchedules: any[] = []
-      
+
       if (Array.isArray(schedules)) {
         /**
          * Create defensive copy of schedules to break potential circular references
@@ -337,7 +386,9 @@ function App() {
         console.log('🔍 App - schedules is array, creating defensive copy')
         safeSchedules = schedules.map((schedule: any, index: number) => {
           // Check if legacy v1 format (has name, start, end, tasks but no entries array)
-          const isLegacy = !('entries' in schedule) && (schedule.name || schedule.start || schedule.end || schedule.tasks)
+          const isLegacy =
+            !('entries' in schedule) &&
+            (schedule.name || schedule.start || schedule.end || schedule.tasks)
           if (isLegacy) {
             // Convert legacy to export format
             return {
@@ -348,16 +399,27 @@ function App() {
               date: schedule.date || '',
               start: schedule.start || '',
               end: schedule.end || '',
-              entries: schedule.tasks ? [{
-                assignee: schedule.name || '',
-                time: schedule.start || '',
-                duration: schedule.end ? parseInt(getDuration(schedule.start || '09:00', schedule.end || '10:00').replace(/[^0-9]/g, '')) || 60 : 60,
-                task: schedule.tasks,
-                status: 'pending' as const,
-                recurrence: 'none' as const
-              }] : [],
+              entries: schedule.tasks
+                ? [
+                    {
+                      assignee: schedule.name || '',
+                      time: schedule.start || '',
+                      duration: schedule.end
+                        ? parseInt(
+                            getDuration(schedule.start || '09:00', schedule.end || '10:00').replace(
+                              /[^0-9]/g,
+                              ''
+                            )
+                          ) || 60
+                        : 60,
+                      task: schedule.tasks,
+                      status: 'pending' as const,
+                      recurrence: 'none' as const,
+                    },
+                  ]
+                : [],
               version: '1.0',
-              recurrence: 'none' as const
+              recurrence: 'none' as const,
             }
           } else {
             // v2 format - defensive copy
@@ -367,22 +429,29 @@ function App() {
               category: schedule.category || 'general',
               description: schedule.description || '',
               date: schedule.date || '',
-              entries: schedule.entries ? schedule.entries.map((entry: any, entryIndex: number) => ({
-                id: entry.id || `temp-entry-${index}-${entryIndex}`,
-                assignee: entry.assignee || '',
-                time: entry.time || '',
-                duration: entry.duration || 60,
-                task: entry.task || '',
-                status: entry.status || 'pending',
-                notes: entry.notes || '',
-                recurrence: entry.recurrence || 'none'
-              })) : [],
+              entries: schedule.entries
+                ? schedule.entries.map((entry: any, entryIndex: number) => ({
+                    id: entry.id || `temp-entry-${index}-${entryIndex}`,
+                    assignee: entry.assignee || '',
+                    time: entry.time || '',
+                    duration: entry.duration || 60,
+                    task: entry.task || '',
+                    status: entry.status || 'pending',
+                    notes: entry.notes || '',
+                    recurrence: entry.recurrence || 'none',
+                  }))
+                : [],
               version: schedule.version || '2.0',
-              recurrence: schedule.recurrence || 'none'
+              recurrence: schedule.recurrence || 'none',
             }
           }
         })
-      } else if (schedules && typeof schedules === 'object' && 'schedules' in schedules && Array.isArray((schedules as any).schedules)) {
+      } else if (
+        schedules &&
+        typeof schedules === 'object' &&
+        'schedules' in schedules &&
+        Array.isArray((schedules as any).schedules)
+      ) {
         /**
          * Handle legacy object format where schedules are nested under .schedules property
          * This can occur with corrupted localStorage data or version migration issues
@@ -396,16 +465,24 @@ function App() {
           date: s.date || '',
           start: s.start || '',
           end: s.end || '',
-          entries: s.tasks ? [{
-            assignee: s.name || '',
-            time: s.start || '',
-            duration: s.end ? parseInt(getDuration(s.start || '09:00', s.end || '10:00').replace(/[^0-9]/g, '')) || 60 : 60,
-            task: s.tasks,
-            status: 'pending' as const,
-            recurrence: 'none' as const
-          }] : [],
+          entries: s.tasks
+            ? [
+                {
+                  assignee: s.name || '',
+                  time: s.start || '',
+                  duration: s.end
+                    ? parseInt(
+                        getDuration(s.start || '09:00', s.end || '10:00').replace(/[^0-9]/g, '')
+                      ) || 60
+                    : 60,
+                  task: s.tasks,
+                  status: 'pending' as const,
+                  recurrence: 'none' as const,
+                },
+              ]
+            : [],
           version: '1.0',
-          recurrence: 'none' as const
+          recurrence: 'none' as const,
         }))
       } else {
         /**
@@ -415,14 +492,19 @@ function App() {
         console.log('🔍 App - schedules format unknown, using empty array')
         safeSchedules = []
       }
-      
+
       /**
        * Log safeSchedules creation details for debugging
        * Verifies array structure and basic data integrity before CSV processing
        */
-      console.log('🔍 App - safeSchedules created, type:', typeof safeSchedules, 'isArray:', Array.isArray(safeSchedules))
+      console.log(
+        '🔍 App - safeSchedules created, type:',
+        typeof safeSchedules,
+        'isArray:',
+        Array.isArray(safeSchedules)
+      )
       console.log('🔍 App - safeSchedules length:', safeSchedules.length)
-      
+
       if (safeSchedules.length > 0) {
         const firstSchedule = safeSchedules[0]
         /**
@@ -431,27 +513,37 @@ function App() {
          */
         console.log('🔍 App - safeSchedules[0]:', firstSchedule)
         console.log('🔍 App - safeSchedules[0] keys:', Object.keys(firstSchedule))
-        console.log('🔍 App - safeSchedules[0].title:', firstSchedule.title, 'type:', typeof firstSchedule.title, 'trimmed:', firstSchedule.title?.trim())
+        console.log(
+          '🔍 App - safeSchedules[0].title:',
+          firstSchedule.title,
+          'type:',
+          typeof firstSchedule.title,
+          'trimmed:',
+          firstSchedule.title?.trim()
+        )
         console.log('🔍 App - safeSchedules[0].start:', firstSchedule.start)
         console.log('🔍 App - safeSchedules[0].date:', firstSchedule.date)
         console.log('🔍 App - safeSchedules[0].description:', firstSchedule.description)
         console.log('🔍 App - safeSchedules[0].entries:', firstSchedule.entries)
-        console.log('🔍 App - safeSchedules[0] stringified length:', JSON.stringify(firstSchedule).length)
+        console.log(
+          '🔍 App - safeSchedules[0] stringified length:',
+          JSON.stringify(firstSchedule).length
+        )
       }
-      
+
       if (safeSchedules.length === 0) {
         console.log('🔍 App - No schedules to export')
         alert('No schedules to export. Check browser console for debug info.')
         return
       }
-      
+
       /**
        * Pre-export validation logging
        * Shows sample data structure before passing to CSV generation
        */
       console.log('🔍 App - About to call exportCSV with safeSchedules')
       console.log('🔍 App - safeSchedules sample:', safeSchedules.slice(0, 2))
-      
+
       /**
        * Execute CSV export using custom hook
        * The useCSVExport hook handles:
@@ -462,7 +554,7 @@ function App() {
        */
       const result = exportCSV(safeSchedules)
       console.log('🔍 App - exportCSV completed, result:', result)
-      
+
       /**
        * Handle export result and provide user feedback
        * Success: Log completion details
@@ -475,7 +567,6 @@ function App() {
         console.error('🔍 App - Export failed:', result.error)
         alert(`Export failed: ${result.error}`)
       }
-      
     } catch (error) {
       /**
        * Comprehensive error handling for unexpected failures during export
@@ -487,7 +578,10 @@ function App() {
        * - Unexpected data structure issues
        */
       console.error('🔍 App - handleExport error:', error)
-      console.error('🔍 App - Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+      console.error(
+        '🔍 App - Error stack:',
+        error instanceof Error ? error.stack : 'No stack trace'
+      )
       const errorMessage = error instanceof Error ? error.message : String(error)
       console.error('🔍 App - Error message:', errorMessage)
       alert(`Export failed with error: ${errorMessage}. Check console for details.`)
@@ -510,13 +604,15 @@ function App() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <AppHeader scheduleCount={schedules.length} />
+      <div className="no-print">
+        <AppHeader scheduleCount={schedules.length} />
+      </div>
 
       <div className="container max-w-screen-2xl mx-auto p-4 space-y-6 py-8">
         {/* Add/Edit Form */}
         {showForm && (
-          <div className="space-y-4">
-            <ScheduleForm
+          <div className="space-y-4 no-print">
+            <ScheduleFormWrapper
               initialData={editingSchedule || undefined}
               onSubmit={editingSchedule ? handleUpdateSchedule : handleAddSchedule}
               onCancel={handleCancelEdit}
@@ -526,18 +622,20 @@ function App() {
 
         {/* Main Content */}
         {!showForm && viewMode === 'dashboard' && (
-          <ErrorBoundary>
-            <Dashboard
-              onEdit={handleEditSchedule}
-              onDelete={handleDeleteSchedule}
-              onView={handleViewSchedule}
-              onAddSchedule={handleAddClick}
-            />
-          </ErrorBoundary>
+          <div className="no-print">
+            <ErrorBoundary>
+              <Dashboard
+                onEdit={handleEditSchedule}
+                onDelete={handleDeleteSchedule}
+                onView={handleViewSchedule}
+                onAddSchedule={handleAddClick}
+              />
+            </ErrorBoundary>
+          </div>
         )}
 
         {!showForm && viewMode === 'view' && freshSelectedSchedule && (
-          <div className="space-y-4 max-h-screen overflow-auto">
+          <div className="space-y-4 max-h-screen overflow-auto no-print">
             <div className="flex items-center gap-4">
               <Button variant="outline" onClick={handleBackToDashboard}>
                 <ChevronLeft className="h-4 w-4 mr-2" />
@@ -571,18 +669,25 @@ function App() {
         )}
 
         {/* Import Section */}
-        <ImportSection onImport={handleImport} />
-      
+        <div className="no-print">
+          <ImportSection onImport={handleImport} />
+        </div>
+
         {/* Print Schedule - Always rendered but hidden on screen */}
-        <PrintSchedule
-          className="hidden print:block"
-          schedules={viewMode === 'view' && freshSelectedSchedule ? [freshSelectedSchedule] : schedules}
-          companyName="Housekeeper Services"
-          printedAt={new Date()}
-          isSingleSchedule={viewMode === 'view' && !!freshSelectedSchedule}
-        />
+        <div className="print-content hidden print:block">
+          <PrintSchedule
+            schedules={
+              viewMode === 'view' && freshSelectedSchedule ? [freshSelectedSchedule] : schedules
+            }
+            companyName="Housekeeper Services"
+            printedAt={new Date()}
+            isSingleSchedule={viewMode === 'view' && !!freshSelectedSchedule}
+          />
+        </div>
       </div>
-      <CookieBanner />
+      <div className="no-print">
+        <CookieBanner />
+      </div>
       <Toaster />
     </div>
   )

@@ -1,21 +1,23 @@
 import * as React from 'react'
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, Td, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
-  Table,
-  TableBody,
-  Td,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { ChevronDown, ChevronRight, User, Calendar, Edit, Trash2, Loader2 } from "lucide-react"
-import { formatDate } from "@/lib/utils"
-import type { Schedule, Entry } from "./schedule-form"
+  ChevronDown,
+  ChevronRight,
+  User,
+  Calendar,
+  Edit,
+  Trash2,
+  Loader2,
+  Repeat,
+} from 'lucide-react'
+import { formatDate } from '@/lib/utils'
+import type { Schedule, Entry, WeeklyScheduleEntry } from './schedule-form'
 
 interface ScheduleDesktopTableProps {
   schedules: Schedule[]
-  filteredEntriesBySchedule: { [scheduleId: string]: Entry[] }
+  filteredEntriesBySchedule: { [scheduleId: string]: (Entry | WeeklyScheduleEntry)[] }
   onEdit: (schedule: Schedule) => void
   onDelete: (id: string) => void
   deletingId: string | null
@@ -38,9 +40,8 @@ export function ScheduleDesktopTable({
   onToggleSort,
   onToggleExpand,
   expandedSchedules,
-  selectedAssignee
+  selectedAssignee,
 }: ScheduleDesktopTableProps) {
-  
   const handleDelete = (id: string) => {
     if (!confirm('Are you sure you want to delete this schedule? This action cannot be undone.')) {
       return
@@ -74,12 +75,24 @@ export function ScheduleDesktopTable({
         </TableHeader>
         <TableBody>
           {schedules.map((schedule) => {
-            const scheduleEntries = filteredEntriesBySchedule[schedule.id] || schedule.entries || []
+            // Get entries based on schedule type
+            let scheduleEntries: (Entry | WeeklyScheduleEntry)[] = []
+            if (filteredEntriesBySchedule[schedule.id]) {
+              scheduleEntries = filteredEntriesBySchedule[schedule.id]
+            } else if (schedule.scheduleType === 'weekly') {
+              scheduleEntries = schedule.weeklyEntries || []
+            } else {
+              scheduleEntries = schedule.entries || []
+            }
+
             const isExpanded = expandedSchedules.has(schedule.id)
             const firstEntry = scheduleEntries[0]
-            const totalDurationMinutes = scheduleEntries.reduce((sum, entry) => sum + (entry.duration || 0), 0)
+            const totalDurationMinutes = scheduleEntries.reduce(
+              (sum, entry) => sum + (entry.duration || 0),
+              0
+            )
             const totalDurationHours = (totalDurationMinutes / 60).toFixed(1)
-            
+
             return (
               <React.Fragment key={schedule.id}>
                 {/* Schedule Header Row */}
@@ -113,8 +126,17 @@ export function ScheduleDesktopTable({
                   </Td>
                   <Td>
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{formatDate(schedule.date)}</span>
+                      {schedule.scheduleType === 'weekly' ? (
+                        <>
+                          <Repeat className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">Weekly Schedule</span>
+                        </>
+                      ) : (
+                        <>
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{formatDate(schedule.date)}</span>
+                        </>
+                      )}
                     </div>
                   </Td>
                   <Td className="text-center">
@@ -129,14 +151,19 @@ export function ScheduleDesktopTable({
                   </Td>
                   <Td className="text-center">
                     <Badge variant="outline" className="text-xs">
-                      {isExpanded ? `${totalDurationHours}h` : `${(firstEntry?.duration || 0) / 60}h`}
+                      {isExpanded
+                        ? `${totalDurationHours}h`
+                        : `${(firstEntry?.duration || 0) / 60}h`}
                     </Badge>
                   </Td>
                   <Td className="max-w-xs">
                     <div className="text-sm line-clamp-2">
-                      {firstEntry?.task || schedule.description || "No tasks specified"}
+                      {firstEntry?.task || schedule.description || 'No tasks specified'}
                       {isExpanded && scheduleEntries.length > 1 && (
-                        <span className="text-muted-foreground"> + {scheduleEntries.length - 1} more</span>
+                        <span className="text-muted-foreground">
+                          {' '}
+                          + {scheduleEntries.length - 1} more
+                        </span>
                       )}
                     </div>
                   </Td>
@@ -170,37 +197,45 @@ export function ScheduleDesktopTable({
                 </TableRow>
 
                 {/* Entry Rows - only show when expanded */}
-                {isExpanded && scheduleEntries.map((entry) => (
-                  <TableRow
-                    key={`${schedule.id}-entry-${entry.id}`}
-                    className={`hover:bg-accent/50 ${entry.assignee === selectedAssignee && selectedAssignee !== 'all' ? 'bg-primary/5 border-l-4 border-primary/20' : ''}`}
-                  >
-                    <Td className="w-12 bg-accent/20" />
-                    <Td className="pl-14">
-                      <Badge variant="outline" className="text-xs">
-                        {entry.assignee || 'Unassigned'}
-                      </Badge>
-                    </Td>
-                    <Td />
-                    <Td className="text-center">
-                      <div className="text-sm">{entry.time}</div>
-                    </Td>
-                    <Td className="text-center">
-                      <Badge variant="outline" className="text-xs">
-                        {(entry.duration || 0) / 60}h
-                      </Badge>
-                    </Td>
-                    <Td className="max-w-xs">
-                      <div className="text-sm line-clamp-2">{entry.task}</div>
-                      {entry.notes && (
-                        <div className="text-xs text-muted-foreground mt-1 italic">
-                          Notes: {entry.notes}
+                {isExpanded &&
+                  scheduleEntries.map((entry) => (
+                    <TableRow
+                      key={`${schedule.id}-entry-${entry.id}`}
+                      className={`hover:bg-accent/50 ${entry.assignee === selectedAssignee && selectedAssignee !== 'all' ? 'bg-primary/5 border-l-4 border-primary/20' : ''}`}
+                    >
+                      <Td className="w-12 bg-accent/20" />
+                      <Td className="pl-14">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {entry.assignee || 'Unassigned'}
+                          </Badge>
+                          {schedule.scheduleType === 'weekly' && 'dayOfWeek' in entry && (
+                            <Badge variant="secondary" className="text-xs capitalize">
+                              {entry.dayOfWeek}
+                            </Badge>
+                          )}
                         </div>
-                      )}
-                    </Td>
-                    <Td />
-                  </TableRow>
-                ))}
+                      </Td>
+                      <Td />
+                      <Td className="text-center">
+                        <div className="text-sm">{entry.time}</div>
+                      </Td>
+                      <Td className="text-center">
+                        <Badge variant="outline" className="text-xs">
+                          {(entry.duration || 0) / 60}h
+                        </Badge>
+                      </Td>
+                      <Td className="max-w-xs">
+                        <div className="text-sm line-clamp-2">{entry.task}</div>
+                        {entry.notes && (
+                          <div className="text-xs text-muted-foreground mt-1 italic">
+                            Notes: {entry.notes}
+                          </div>
+                        )}
+                      </Td>
+                      <Td />
+                    </TableRow>
+                  ))}
               </React.Fragment>
             )
           })}

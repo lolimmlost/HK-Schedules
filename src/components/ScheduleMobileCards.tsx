@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { ChevronDown, User, Calendar, Clock, Edit, Trash2, Loader2 } from "lucide-react"
-import { formatDate, getDuration } from "@/lib/utils"
-import type { Schedule, Entry } from "./schedule-form"
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { ChevronDown, User, Calendar, Clock, Edit, Trash2, Loader2 } from 'lucide-react'
+import { formatDate, getDuration } from '@/lib/utils'
+import type { Schedule, Entry } from './schedule-form'
 
 interface ScheduleMobileCardsProps {
   schedules: Schedule[]
@@ -24,9 +24,8 @@ export function ScheduleMobileCards({
   deletingId,
   onToggleExpand,
   expandedSchedules,
-  selectedAssignee
+  selectedAssignee,
 }: ScheduleMobileCardsProps) {
-  
   const handleDelete = (id: string) => {
     if (!confirm('Are you sure you want to delete this schedule? This action cannot be undone.')) {
       return
@@ -41,11 +40,11 @@ export function ScheduleMobileCards({
         const isExpanded = expandedSchedules.has(schedule.id)
         const firstEntry = scheduleEntries[0]
         const totalDuration = scheduleEntries.reduce((sum, entry) => sum + (entry.duration || 0), 0)
-        
+
         return (
           <Card key={schedule.id} className="w-full">
             {/* Schedule Header */}
-            <CardHeader 
+            <CardHeader
               className={`flex flex-row items-start justify-between p-4 pb-2 cursor-pointer ${isExpanded ? 'rounded-t-lg' : 'rounded-lg'}`}
               onClick={() => onToggleExpand(schedule.id)}
             >
@@ -54,7 +53,9 @@ export function ScheduleMobileCards({
                   <User className="h-5 w-5 text-primary" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-medium text-foreground truncate">{schedule.title || schedule.name}</h3>
+                  <h3 className="font-medium text-foreground truncate">
+                    {schedule.title || schedule.name}
+                  </h3>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                     <Calendar className="h-3 w-3" />
                     {formatDate(schedule.date)}
@@ -68,7 +69,7 @@ export function ScheduleMobileCards({
                   )}
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                 {/* Expand/Collapse Button */}
                 <Button
@@ -80,11 +81,11 @@ export function ScheduleMobileCards({
                   }}
                   className="h-8 w-8 p-0"
                 >
-                  <ChevronDown 
-                    className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                   />
                 </Button>
-                
+
                 {/* Action Buttons */}
                 <Button
                   variant="ghost"
@@ -132,16 +133,23 @@ export function ScheduleMobileCards({
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Duration</span>
                     <Badge variant="outline" className="text-xs px-2 py-0.5">
-                      {firstEntry?.duration || (schedule.start && schedule.end ? `${getDuration(schedule.start, schedule.end)}h` : 'N/A')}h
+                      {firstEntry?.duration ||
+                        (schedule.start && schedule.end
+                          ? `${getDuration(schedule.start, schedule.end)}h`
+                          : 'N/A')}
+                      h
                     </Badge>
                   </div>
                 </div>
                 <div className="mt-3">
                   <span className="text-muted-foreground text-sm">Tasks</span>
                   <div className="ml-2 mt-1 text-sm line-clamp-2">
-                    {firstEntry?.task || schedule.tasks || "No tasks specified"}
+                    {firstEntry?.task || schedule.tasks || 'No tasks specified'}
                     {scheduleEntries.length > 1 && (
-                      <span className="text-muted-foreground"> + {scheduleEntries.length - 1} more</span>
+                      <span className="text-muted-foreground">
+                        {' '}
+                        + {scheduleEntries.length - 1} more
+                      </span>
                     )}
                   </div>
                 </div>
@@ -170,11 +178,11 @@ export function ScheduleMobileCards({
 
                   {/* Individual Entry Cards */}
                   {scheduleEntries.map((entry) => (
-                    <div 
+                    <div
                       key={`${schedule.id}-entry-${entry.id}`}
                       className={`p-3 rounded-lg border ${
-                        entry.assignee === selectedAssignee && selectedAssignee !== 'all' 
-                          ? 'border-primary/30 bg-primary/5' 
+                        entry.assignee === selectedAssignee && selectedAssignee !== 'all'
+                          ? 'border-primary/30 bg-primary/5'
                           : 'border-border'
                       }`}
                     >
@@ -188,7 +196,10 @@ export function ScheduleMobileCards({
                               <Badge variant="outline" className="text-xs flex-shrink-0">
                                 {entry.assignee}
                               </Badge>
-                              <Badge variant={entry.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
+                              <Badge
+                                variant={entry.status === 'completed' ? 'default' : 'secondary'}
+                                className="text-xs"
+                              >
                                 {entry.status}
                               </Badge>
                             </div>

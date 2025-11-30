@@ -1,9 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Edit3, Trash2, Eye, Clock, Calendar, Users } from "lucide-react"
-import { Schedule } from "./schedule-form"
-import { formatDate } from "@/lib/utils"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Edit3, Trash2, Eye, Clock, Calendar, Users, Repeat } from 'lucide-react'
+import { Schedule } from './schedule-form'
+import { formatDate } from '@/lib/utils'
+import {
+  getWeeklyScheduleDescription,
+  getWeeklyScheduleTimeRange,
+} from '@/lib/weekly-schedule-utils'
 
 interface ScheduleCardProps {
   schedule: Schedule
@@ -13,15 +17,32 @@ interface ScheduleCardProps {
 }
 
 export function ScheduleCard({ schedule, onView, onEdit, onDelete }: ScheduleCardProps) {
-  const entryCount = (s: Schedule) => s.entries?.length || 1
+  const entryCount = (s: Schedule) => {
+    if (s.scheduleType === 'weekly') {
+      return s.weeklyEntries?.length || 0
+    }
+    return s.entries?.length || 1
+  }
   const getLastUpdated = (s: Schedule) => formatDate(s.date || new Date().toISOString())
+
+  const isWeekly = schedule.scheduleType === 'weekly'
+  const weeklyDescription = isWeekly ? getWeeklyScheduleDescription(schedule) : ''
+  const weeklyTimeRange = isWeekly ? getWeeklyScheduleTimeRange(schedule) : ''
 
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-lg leading-tight">{schedule.title}</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg leading-tight">{schedule.title}</CardTitle>
+              {isWeekly && (
+                <Badge variant="outline" className="text-xs">
+                  <Repeat className="h-3 w-3 mr-1" />
+                  Weekly
+                </Badge>
+              )}
+            </div>
             <Badge variant="secondary" className="mt-1">
               {schedule.category.charAt(0).toUpperCase() + schedule.category.slice(1)}
             </Badge>
@@ -57,24 +78,51 @@ export function ScheduleCard({ schedule, onView, onEdit, onDelete }: ScheduleCar
       </CardHeader>
       <CardContent>
         {schedule.description && (
-          <CardDescription className="mb-3 line-clamp-2">
-            {schedule.description}
-          </CardDescription>
+          <CardDescription className="mb-3 line-clamp-2">{schedule.description}</CardDescription>
         )}
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
             <Clock className="h-3 w-3 text-muted-foreground" />
             <span>{entryCount(schedule)} entries</span>
           </div>
-          {schedule.date && (
-            <div className="flex items-center gap-2">
-              <Calendar className="h-3 w-3 text-muted-foreground" />
-              <span>{formatDate(schedule.date)}</span>
-            </div>
+
+          {isWeekly ? (
+            <>
+              <div className="flex items-center gap-2">
+                <Repeat className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs">{weeklyDescription}</span>
+              </div>
+              {weeklyTimeRange && (
+                <div className="flex items-center gap-2">
+                  <Clock className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-xs">{weeklyTimeRange}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {schedule.date && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-3 w-3 text-muted-foreground" />
+                  <span>{formatDate(schedule.date)}</span>
+                </div>
+              )}
+            </>
           )}
+
           <div className="flex items-center gap-2">
             <Users className="h-3 w-3 text-muted-foreground" />
-            <span>{schedule.entries?.map(e => e.assignee).filter(Boolean).join(', ') || 'Unassigned'}</span>
+            <span>
+              {isWeekly
+                ? schedule.weeklyEntries
+                    ?.map((e) => e.assignee)
+                    .filter(Boolean)
+                    .join(', ') || 'Unassigned'
+                : schedule.entries
+                    ?.map((e) => e.assignee)
+                    .filter(Boolean)
+                    .join(', ') || 'Unassigned'}
+            </span>
           </div>
           <div className="text-xs text-muted-foreground">
             Last updated: {getLastUpdated(schedule)}
