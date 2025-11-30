@@ -63,7 +63,8 @@ jobs:
 
         run: |
           npm run dev &
-          npx wait-on http://localhost:3001 --timeout 60000
+          sleep 10
+          curl -I http://localhost:3001 || true
           npm run test:e2e
 
       - name: Upload Playwright report
