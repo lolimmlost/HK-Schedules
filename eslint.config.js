@@ -10,8 +10,10 @@ import prettierPlugin from 'eslint-plugin-prettier'
 export default [
   js.configs.recommended,
   {
+    ignores: ['dist/**', 'node_modules/**', 'build/**', 'coverage/**', 'scripts/**'],
+  },
+  {
     files: ['src/**/*.{js,jsx,ts,tsx}', '*.{js,ts}'],
-    ignores: ['dist/**', 'node_modules/**', 'build/**', 'coverage/**'],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
