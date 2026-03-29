@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 const app = express()
-const PORT = process.env.PORT || 4000
+const PORT = process.env.PORT || 4173
 const HOST = process.env.HOST || '0.0.0.0'
 
 // Middleware
@@ -26,6 +26,11 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`)
   next()
+})
+
+// Health check endpoint for Coolify
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' })
 })
 
 // Utility function to calculate duration (server-side version of client-side getDuration)

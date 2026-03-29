@@ -5,7 +5,7 @@ build
 .git
 .gitignore
 .env
-.env.local
+.env.*
 .vscode
 .idea
 *.md
@@ -14,3 +14,13 @@ coverage
 .husky
 test-results
 playwright-report
+playwright
+tests
+agents
+docs
+EPICS
+PRD
+teams
+expansion-packs
+scripts
+debug-*.png
